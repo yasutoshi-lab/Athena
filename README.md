@@ -16,6 +16,13 @@
 ウェブ検索ツール: BraveSearchAPI
 エージェントSDK: Claude-Agent-SDK
 
+## 主要ライブラリ
+
+- langchain
+- langgraph
+- langsmith
+- claude-agent-sdk
+
 ## セットアップ
 
 ```
