@@ -13,6 +13,8 @@ export function useWebSocket(sessionId: number | null) {
     setSelectedModel,
     setError,
     setThinking,
+    addSearchActivity,
+    clearSearchActivities,
   } = useSession();
 
   const connect = useCallback(() => {
@@ -40,7 +42,7 @@ export function useWebSocket(sessionId: number | null) {
       setError("WebSocket接続エラー");
       wsRef.current = null;
     };
-  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking]);
+  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities]);
 
   const handleEvent = useCallback(
     (data: Record<string, unknown>) => {
@@ -111,6 +113,46 @@ export function useWebSocket(sessionId: number | null) {
           });
           break;
 
+        case "search_started":
+          addSearchActivity({
+            id: `search-${Date.now()}`,
+            type: "searching",
+            query: data.query as string,
+            timestamp: Date.now(),
+          });
+          break;
+
+        case "search_results_found":
+          addSearchActivity({
+            id: `results-${Date.now()}`,
+            type: "results",
+            query: data.query as string,
+            results: data.results as { title: string; url: string }[],
+            timestamp: Date.now(),
+          });
+          break;
+
+        case "evidence_analyzing":
+          addSearchActivity({
+            id: `analyzing-${Date.now()}`,
+            type: "analyzing",
+            hypothesisIndex: data.hypothesis_index as number,
+            sourceCount: data.source_count as number,
+            timestamp: Date.now(),
+          });
+          break;
+
+        case "evidence_analyzed":
+          addSearchActivity({
+            id: `analyzed-${Date.now()}`,
+            type: "analyzed",
+            hypothesisIndex: data.hypothesis_index as number,
+            supportCount: data.support_count as number,
+            counterCount: data.counter_count as number,
+            timestamp: Date.now(),
+          });
+          break;
+
         case "evidence_collected": {
           const evidences = data.evidences as Record<string, EvidenceItem[]>;
           let total = 0, support = 0, counter = 0;
@@ -130,6 +172,7 @@ export function useWebSocket(sessionId: number | null) {
             variant: "evidence",
             evidenceSummary: { total, support, counter },
           });
+          clearSearchActivities();
           break;
         }
 
@@ -185,7 +228,7 @@ export function useWebSocket(sessionId: number | null) {
           break;
       }
     },
-    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking],
+    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities],
   );
 
   const sendMessage = useCallback(

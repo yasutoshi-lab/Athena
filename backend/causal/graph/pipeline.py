@@ -93,6 +93,19 @@ NODE_SEQUENCE = [
 _SENTINEL = object()  # Marks end of queue
 
 
+class LiveEvent:
+    """Wrapper for events emitted from within a node (mid-execution).
+
+    These are placed into the shared queue alongside LangGraph step dicts
+    and sent directly to the WebSocket client.
+    """
+
+    __slots__ = ("data",)
+
+    def __init__(self, data: dict):
+        self.data = data
+
+
 async def run_pipeline(
     query: str,
     session_id: int,
@@ -148,6 +161,9 @@ async def run_pipeline(
     # Thread-safe queue for real-time streaming between worker thread and async loop
     eq = thread_queue.Queue()
 
+    # Inject the live event queue into state so nodes can emit mid-execution events
+    initial_state["_live_queue"] = eq  # type: ignore[typeddict-unknown-key]
+
     def _run_sync():
         """Execute pipeline in worker thread, putting each step into the queue."""
         try:
@@ -181,6 +197,11 @@ async def run_pipeline(
         # Re-raise exceptions from the worker thread
         if isinstance(item, Exception):
             raise item
+
+        # Live events emitted mid-node are sent directly
+        if isinstance(item, LiveEvent):
+            await send_event(item.data)
+            continue
 
         step = item
         for node_name, node_output in step.items():

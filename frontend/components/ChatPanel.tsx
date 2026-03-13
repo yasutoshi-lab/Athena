@@ -7,6 +7,7 @@ import {
   type ParsedQuestionData,
   type EvidenceSummaryData,
   type ReferenceData,
+  type SearchActivityItem,
 } from "@/hooks/useSession";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -20,6 +21,7 @@ export default function ChatPanel({ onSend, onStop, onClear }: ChatPanelProps) {
   const messages = useSession((s) => s.messages);
   const status = useSession((s) => s.status);
   const thinking = useSession((s) => s.thinking);
+  const searchActivities = useSession((s) => s.searchActivities);
   const user = useAuth((s) => s.user);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
@@ -28,7 +30,7 @@ export default function ChatPanel({ onSend, onStop, onClear }: ChatPanelProps) {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, searchActivities, thinking]);
 
   const handleSend = () => {
     const text = input.trim();
@@ -111,6 +113,7 @@ export default function ChatPanel({ onSend, onStop, onClear }: ChatPanelProps) {
         {messages.map((msg) => (
           <MessageItem key={msg.id} msg={msg} nickname={nickname} />
         ))}
+        {searchActivities.length > 0 && <SearchActivityFeed activities={searchActivities} />}
         {thinking && <ThinkingIndicator icon={thinking.icon} label={thinking.label} />}
       </div>
 
@@ -674,6 +677,130 @@ function AnswerCard({ content, references }: { content: string; references?: Ref
       </div>
     </div>
   );
+}
+
+function SearchActivityFeed({ activities }: { activities: SearchActivityItem[] }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+        animation: "fadeUp 0.25s ease",
+      }}
+    >
+      <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)" }}>
+        ATHENA — Web検索
+      </div>
+      <div
+        style={{
+          padding: "8px 10px",
+          borderRadius: 8,
+          background: "var(--bg-2)",
+          border: "1px solid var(--border)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 5,
+          maxHeight: 200,
+          overflowY: "auto",
+        }}
+      >
+        {activities.map((item) => (
+          <SearchActivityLine key={item.id} item={item} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SearchActivityLine({ item }: { item: SearchActivityItem }) {
+  if (item.type === "searching") {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 6, animation: "fadeUp 0.2s ease" }}>
+        <span style={{ fontSize: 10, opacity: 0.7, animation: "pulse 1.5s infinite" }}>🔍</span>
+        <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-1)" }}>
+          検索中: <span style={{ color: "var(--text-0)" }}>{item.query}</span>
+        </span>
+      </div>
+    );
+  }
+
+  if (item.type === "results" && item.results) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, animation: "fadeUp 0.2s ease" }}>
+        <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)", marginBottom: 1 }}>
+          {item.results.length}件の結果を取得
+        </div>
+        {item.results.map((r, i) => (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              paddingLeft: 6,
+            }}
+          >
+            <span
+              style={{
+                width: 3,
+                height: 3,
+                borderRadius: "50%",
+                background: "var(--accent)",
+                flexShrink: 0,
+                opacity: 0.6,
+              }}
+            />
+            <a
+              href={r.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontFamily: "var(--mono)",
+                fontSize: 10,
+                color: "var(--text-1)",
+                textDecoration: "none",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: 280,
+              }}
+              title={r.url}
+            >
+              {r.title || r.url}
+            </a>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (item.type === "analyzing") {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 6, animation: "fadeUp 0.2s ease" }}>
+        <span style={{ fontSize: 10, opacity: 0.7, animation: "pulse 1.5s infinite" }}>⚗</span>
+        <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-1)" }}>
+          仮説{(item.hypothesisIndex ?? 0) + 1}の証拠を分析中
+          <span style={{ color: "var(--text-2)" }}> ({item.sourceCount}件)</span>
+        </span>
+      </div>
+    );
+  }
+
+  if (item.type === "analyzed") {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 6, animation: "fadeUp 0.2s ease" }}>
+        <span style={{ fontSize: 10 }}>✓</span>
+        <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-1)" }}>
+          仮説{(item.hypothesisIndex ?? 0) + 1}:
+          <span style={{ color: "#2dbe8a", marginLeft: 4 }}>支持 {item.supportCount ?? 0}</span>
+          <span style={{ color: "#d45757", marginLeft: 6 }}>反証 {item.counterCount ?? 0}</span>
+        </span>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function ThinkingIndicator({ icon, label }: { icon: string; label: string }) {

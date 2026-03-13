@@ -34,11 +34,23 @@ EVIDENCE_ANALYSIS_PROMPT = """あなたは証拠評価の専門家です。
 各検索結果が仮説を支持するか反証するかを判断し、関連する証拠のみを含めてください。"""
 
 
-def _brave_search(query: str, count: int = 5) -> list[dict]:
+def _emit(queue, event: dict):
+    """Put a LiveEvent into the shared queue (if available)."""
+    if queue is not None:
+        from ..graph.pipeline import LiveEvent
+        queue.put(LiveEvent(event))
+
+
+def _brave_search(query: str, count: int = 5, *, live_queue=None) -> list[dict]:
     api_key = settings.BRAVE_API_KEY
     if not api_key:
         logger.warning("Brave API key not configured")
         return []
+
+    _emit(live_queue, {
+        "type": "search_started",
+        "query": query[:120],
+    })
 
     try:
         resp = httpx.get(
@@ -54,7 +66,7 @@ def _brave_search(query: str, count: int = 5) -> list[dict]:
         resp.raise_for_status()
         data = resp.json()
         results = data.get("web", {}).get("results", [])
-        return [
+        parsed = [
             {
                 "title": r.get("title", ""),
                 "url": r.get("url", ""),
@@ -62,6 +74,18 @@ def _brave_search(query: str, count: int = 5) -> list[dict]:
             }
             for r in results
         ]
+
+        # Emit found URLs
+        _emit(live_queue, {
+            "type": "search_results_found",
+            "query": query[:120],
+            "results": [
+                {"title": r["title"], "url": r["url"]}
+                for r in parsed
+            ],
+        })
+
+        return parsed
     except Exception as e:
         logger.error(f"Brave search error: {e}")
         return []
@@ -72,9 +96,18 @@ def _analyze_evidence(
     search_results: list[dict],
     model: str,
     session_id: int,
+    *,
+    hyp_index: int = 0,
+    live_queue=None,
 ) -> list[dict]:
     if not search_results:
         return []
+
+    _emit(live_queue, {
+        "type": "evidence_analyzing",
+        "hypothesis_index": hyp_index,
+        "source_count": len(search_results),
+    })
 
     results_text = "\n\n".join(
         f"【{r['title']}】\nURL: {r['url']}\n{r['description']}"
@@ -108,7 +141,18 @@ def _analyze_evidence(
     text = response.content[0].text
     result = extract_json(text)
     if result is not None:
-        return result.get("evidences", []) if isinstance(result, dict) else result
+        evidences = result.get("evidences", []) if isinstance(result, dict) else result
+
+        support = sum(1 for e in evidences if e.get("stance") == "support")
+        counter = sum(1 for e in evidences if e.get("stance") == "counter")
+        _emit(live_queue, {
+            "type": "evidence_analyzed",
+            "hypothesis_index": hyp_index,
+            "support_count": support,
+            "counter_count": counter,
+        })
+
+        return evidences
     logger.warning("Failed to parse evidence analysis response")
     return []
 
@@ -118,17 +162,21 @@ def evidence_searcher(state: dict) -> dict:
     session_id = state["session_id"]
     model = state["selected_model"]
     hypotheses = state.get("hypotheses", [])
+    live_queue = state.get("_live_queue")
 
     all_evidences = {}
 
     for i, hyp in enumerate(hypotheses):
         search_query = f"{query} {hyp['text']}"
 
-        # Run brave search (synchronous)
-        search_results = _brave_search(search_query)
+        # Run brave search (synchronous) with live progress
+        search_results = _brave_search(search_query, live_queue=live_queue)
 
-        # Analyze search results
-        evidences = _analyze_evidence(hyp["text"], search_results, model, session_id)
+        # Analyze search results with live progress
+        evidences = _analyze_evidence(
+            hyp["text"], search_results, model, session_id,
+            hyp_index=i, live_queue=live_queue,
+        )
         all_evidences[i] = evidences
 
     return {

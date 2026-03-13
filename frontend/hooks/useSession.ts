@@ -57,6 +57,18 @@ export interface GraphEdgeData {
   edge_type: string;
 }
 
+export interface SearchActivityItem {
+  id: string;
+  type: "searching" | "results" | "analyzing" | "analyzed";
+  query?: string;
+  results?: { title: string; url: string }[];
+  hypothesisIndex?: number;
+  sourceCount?: number;
+  supportCount?: number;
+  counterCount?: number;
+  timestamp: number;
+}
+
 export interface ThinkingState {
   node: string;
   icon: string;
@@ -73,6 +85,7 @@ interface SessionState {
   selectedModel: string;
   error: string | null;
   thinking: ThinkingState | null;
+  searchActivities: SearchActivityItem[];
 
   setSessionId: (id: number) => void;
   addMessage: (msg: ChatMessage) => void;
@@ -83,6 +96,8 @@ interface SessionState {
   setSelectedModel: (m: string) => void;
   setError: (e: string | null) => void;
   setThinking: (t: ThinkingState | null) => void;
+  addSearchActivity: (item: SearchActivityItem) => void;
+  clearSearchActivities: () => void;
   reset: () => void;
 }
 
@@ -98,6 +113,7 @@ export const useSession = create<SessionState>((set) => ({
   selectedModel: "sonnet",
   error: null,
   thinking: null,
+  searchActivities: [],
 
   setSessionId: (id) => set({ sessionId: id }),
   addMessage: (msg) =>
@@ -130,6 +146,9 @@ export const useSession = create<SessionState>((set) => ({
   setSelectedModel: (m) => set({ selectedModel: m }),
   setError: (e) => set({ error: e }),
   setThinking: (t) => set({ thinking: t }),
+  addSearchActivity: (item) =>
+    set((s) => ({ searchActivities: [...s.searchActivities, item] })),
+  clearSearchActivities: () => set({ searchActivities: [] }),
   reset: () =>
     set({
       sessionId: null,
@@ -141,5 +160,6 @@ export const useSession = create<SessionState>((set) => ({
       selectedModel: "sonnet",
       error: null,
       thinking: null,
+      searchActivities: [],
     }),
 }));
