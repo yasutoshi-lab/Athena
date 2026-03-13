@@ -1,6 +1,12 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
-import { useSession, type ChatMessage, type HypothesisData } from "@/hooks/useSession";
+import {
+  useSession,
+  type ChatMessage,
+  type HypothesisData,
+  type ParsedQuestionData,
+  type EvidenceSummaryData,
+} from "@/hooks/useSession";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ChatPanelProps {
@@ -68,11 +74,15 @@ export default function ChatPanel({ onSend }: ChatPanelProps) {
             width: 5,
             height: 5,
             borderRadius: "50%",
-            background: "var(--accent)",
+            background: status === "running" ? "var(--accent)" : "var(--text-2)",
             opacity: 0.6,
+            animation: status === "running" ? "pulse 1.5s infinite" : "none",
           }}
         />
         推論チャット
+        {status === "running" && (
+          <span style={{ marginLeft: "auto", fontSize: 9.5, opacity: 0.6 }}>処理中…</span>
+        )}
       </div>
 
       {/* Messages */}
@@ -185,6 +195,7 @@ function MessageItem({ msg, nickname }: { msg: ChatMessage; nickname: string }) 
             fontSize: 11,
             color: "var(--text-1)",
             width: "fit-content",
+            whiteSpace: "pre-wrap",
           }}
         >
           <span style={{ fontSize: 12 }}>{msg.stepIcon}</span>
@@ -197,6 +208,7 @@ function MessageItem({ msg, nickname }: { msg: ChatMessage; nickname: string }) 
               padding: "1px 5px",
               borderRadius: 3,
               letterSpacing: "0.04em",
+              flexShrink: 0,
             }}
           >
             {msg.stepTag}
@@ -204,6 +216,10 @@ function MessageItem({ msg, nickname }: { msg: ChatMessage; nickname: string }) 
         </div>
       </div>
     );
+  }
+
+  if (msg.variant === "parsed" && msg.parsedQuestion) {
+    return <ParsedQuestionCard parsed={msg.parsedQuestion} />;
   }
 
   if (msg.variant === "hypothesis" && msg.hypotheses) {
@@ -217,6 +233,10 @@ function MessageItem({ msg, nickname }: { msg: ChatMessage; nickname: string }) 
         </div>
       </div>
     );
+  }
+
+  if (msg.variant === "evidence" && msg.evidenceSummary) {
+    return <EvidenceSummaryCard summary={msg.evidenceSummary} />;
   }
 
   if (msg.variant === "answer") {
@@ -246,6 +266,103 @@ function MessageItem({ msg, nickname }: { msg: ChatMessage; nickname: string }) 
       nickname={msg.type === "user" ? nickname : "ATHENA"}
       content={msg.content}
     />
+  );
+}
+
+function ParsedQuestionCard({ parsed }: { parsed: ParsedQuestionData }) {
+  const fields = [
+    { label: "主語", value: parsed.subject },
+    { label: "述語", value: parsed.predicate },
+    { label: "スコープ", value: parsed.scope },
+    { label: "時間軸", value: parsed.time_frame },
+  ].filter((f) => f.value);
+  const entities = parsed.entities?.filter(Boolean) || [];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 5, animation: "fadeUp 0.25s ease" }}>
+      <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)" }}>ATHENA</div>
+      <div
+        style={{
+          padding: "10px 12px",
+          borderRadius: 8,
+          background: "var(--bg-2)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "var(--mono)",
+            fontSize: 9.5,
+            color: "var(--accent)",
+            letterSpacing: "0.06em",
+            marginBottom: 6,
+          }}
+        >
+          STRUCTURED QUERY
+        </div>
+        {fields.map((f) => (
+          <div key={f.label} style={{ fontSize: 12, color: "var(--text-1)", lineHeight: 1.8 }}>
+            <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)", marginRight: 6 }}>
+              {f.label}:
+            </span>
+            {f.value}
+          </div>
+        ))}
+        {entities.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+            {entities.map((e, i) => (
+              <span
+                key={i}
+                style={{
+                  fontSize: 10.5,
+                  padding: "2px 7px",
+                  borderRadius: 4,
+                  background: "var(--accent-dim)",
+                  color: "var(--accent)",
+                  fontFamily: "var(--mono)",
+                }}
+              >
+                {e}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EvidenceSummaryCard({ summary }: { summary: EvidenceSummaryData }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 5, animation: "fadeUp 0.25s ease" }}>
+      <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)" }}>ATHENA</div>
+      <div
+        style={{
+          padding: "10px 12px",
+          borderRadius: 8,
+          background: "var(--bg-2)",
+          border: "1px solid var(--border)",
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+        }}
+      >
+        <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)" }}>
+          証拠収集完了
+        </div>
+        <div style={{ display: "flex", gap: 10, marginLeft: "auto" }}>
+          <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--text-1)" }}>
+            計 <strong style={{ color: "var(--text-0)" }}>{summary.total}</strong>件
+          </span>
+          <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "#2dbe8a" }}>
+            支持 {summary.support}
+          </span>
+          <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "#d45757" }}>
+            反証 {summary.counter}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -302,6 +419,7 @@ function MessageBubble({
 }
 
 function HypothesisCard({ hyp, index }: { hyp: HypothesisData; index: number }) {
+  const displayScore = hyp.score ?? hyp.initial_score ?? 0;
   return (
     <div
       style={{
@@ -318,13 +436,31 @@ function HypothesisCard({ hyp, index }: { hyp: HypothesisData; index: number }) 
           color: "var(--text-2)",
           marginBottom: 4,
           letterSpacing: "0.06em",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
         }}
       >
         HYPOTHESIS {String(index + 1).padStart(2, "0")}
+        {hyp.support_count != null && (
+          <span style={{ fontSize: 9, color: "#2dbe8a" }}>
+            +{hyp.support_count}
+          </span>
+        )}
+        {hyp.counter_count != null && hyp.counter_count > 0 && (
+          <span style={{ fontSize: 9, color: "#d45757" }}>
+            -{hyp.counter_count}
+          </span>
+        )}
       </div>
       <div style={{ fontSize: 13, color: "var(--text-0)", lineHeight: 1.6 }}>
         {hyp.text}
       </div>
+      {hyp.ranking_reasoning && (
+        <div style={{ fontSize: 11, color: "var(--text-2)", lineHeight: 1.5, marginTop: 4 }}>
+          {hyp.ranking_reasoning}
+        </div>
+      )}
       <div
         style={{
           display: "flex",
@@ -347,7 +483,7 @@ function HypothesisCard({ hyp, index }: { hyp: HypothesisData; index: number }) 
               height: "100%",
               borderRadius: 1,
               background: "var(--accent)",
-              width: `${hyp.score * 100}%`,
+              width: `${displayScore * 100}%`,
               transition: "width 1s ease",
             }}
           />
@@ -359,7 +495,7 @@ function HypothesisCard({ hyp, index }: { hyp: HypothesisData; index: number }) 
             color: "var(--accent)",
           }}
         >
-          {hyp.score.toFixed(2)}
+          {displayScore.toFixed(2)}
         </div>
       </div>
     </div>

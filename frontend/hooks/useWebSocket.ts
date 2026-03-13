@@ -6,7 +6,8 @@ export function useWebSocket(sessionId: number | null) {
   const wsRef = useRef<WebSocket | null>(null);
   const {
     addMessage,
-    setGraphData,
+    updateMessage,
+    addGraphData,
     setProgress,
     setStatus,
     setSelectedModel,
@@ -38,7 +39,7 @@ export function useWebSocket(sessionId: number | null) {
       setError("WebSocket接続エラー");
       wsRef.current = null;
     };
-  }, [sessionId, addMessage, setGraphData, setProgress, setStatus, setSelectedModel, setError]);
+  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError]);
 
   const handleEvent = useCallback(
     (data: Record<string, unknown>) => {
@@ -59,17 +60,36 @@ export function useWebSocket(sessionId: number | null) {
           setProgress(data.progress as number);
           break;
 
-        case "model_selected":
+        case "model_selected": {
+          const modelName = (data.model as string).includes("opus") ? "Claude Opus" : "Claude Sonnet";
+          const score = data.complexity_score as number;
+          const entityCount = data.entity_count as number;
+          const reasoning = data.reasoning as string;
           setSelectedModel(data.model as string);
           addMessage({
             id: "model-selected",
             type: "ai",
-            content: `モデル決定：${(data.model as string).includes("opus") ? "Claude Opus" : "Claude Sonnet"}`,
+            content: `モデル決定：${modelName}\n複雑度スコア: ${score?.toFixed(2) ?? "N/A"} | エンティティ数: ${entityCount ?? "N/A"}${reasoning ? `\n${reasoning}` : ""}`,
             variant: "step",
             stepIcon: "◎",
             stepTag: "auto",
           });
           break;
+        }
+
+        case "question_parsed": {
+          const parsed = data.parsed_question as Record<string, unknown>;
+          if (parsed) {
+            addMessage({
+              id: "question-parsed",
+              type: "ai",
+              content: "",
+              variant: "parsed",
+              parsedQuestion: parsed as ParsedQuestionData,
+            });
+          }
+          break;
+        }
 
         case "hypotheses_generated":
           addMessage({
@@ -81,16 +101,42 @@ export function useWebSocket(sessionId: number | null) {
           });
           break;
 
+        case "evidence_collected": {
+          const evidences = data.evidences as Record<string, EvidenceItem[]>;
+          let total = 0, support = 0, counter = 0;
+          if (evidences) {
+            for (const evs of Object.values(evidences)) {
+              for (const ev of evs) {
+                total++;
+                if (ev.stance === "support") support++;
+                else if (ev.stance === "counter") counter++;
+              }
+            }
+          }
+          addMessage({
+            id: "evidence-collected",
+            type: "ai",
+            content: "",
+            variant: "evidence",
+            evidenceSummary: { total, support, counter },
+          });
+          break;
+        }
+
         case "graph_update":
-          setGraphData(
+          addGraphData(
             data.nodes as GraphNodeData[],
             data.edges as GraphEdgeData[],
           );
           break;
 
-        case "hypotheses_ranked":
-          // Update hypothesis scores in existing message
+        case "hypotheses_ranked": {
+          const ranked = data.hypotheses as HypothesisData[];
+          if (ranked) {
+            updateMessage("hypotheses", { hypotheses: ranked });
+          }
           break;
+        }
 
         case "final_answer":
           addMessage({
@@ -113,7 +159,7 @@ export function useWebSocket(sessionId: number | null) {
           break;
       }
     },
-    [addMessage, setGraphData, setProgress, setStatus, setSelectedModel, setError],
+    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError],
   );
 
   const sendMessage = useCallback(
@@ -139,13 +185,32 @@ export function useWebSocket(sessionId: number | null) {
   return { connect, sendMessage, disconnect };
 }
 
-// Re-export types for convenience
+// Types
+type ParsedQuestionData = {
+  main_question?: string;
+  subject?: string;
+  predicate?: string;
+  scope?: string;
+  time_frame?: string;
+  entities?: string[];
+};
+
 type HypothesisData = {
   text: string;
   short_label?: string;
   score: number;
+  initial_score?: number;
   support_count?: number;
   counter_count?: number;
+  ranking_reasoning?: string;
+};
+
+type EvidenceItem = {
+  text: string;
+  stance: string;
+  confidence: string;
+  source_url?: string;
+  source_title?: string;
 };
 
 type GraphNodeData = {

@@ -5,18 +5,37 @@ export interface ChatMessage {
   id: string;
   type: "user" | "ai";
   content: string;
-  variant?: "bubble" | "step" | "hypothesis" | "answer";
+  variant?: "bubble" | "step" | "hypothesis" | "answer" | "evidence" | "parsed";
   stepIcon?: string;
   stepTag?: string;
   hypotheses?: HypothesisData[];
+  parsedQuestion?: ParsedQuestionData;
+  evidenceSummary?: EvidenceSummaryData;
 }
 
 export interface HypothesisData {
   text: string;
   short_label?: string;
   score: number;
+  initial_score?: number;
   support_count?: number;
   counter_count?: number;
+  ranking_reasoning?: string;
+}
+
+export interface ParsedQuestionData {
+  main_question?: string;
+  subject?: string;
+  predicate?: string;
+  scope?: string;
+  time_frame?: string;
+  entities?: string[];
+}
+
+export interface EvidenceSummaryData {
+  total: number;
+  support: number;
+  counter: number;
 }
 
 export interface GraphNodeData {
@@ -44,7 +63,8 @@ interface SessionState {
 
   setSessionId: (id: number) => void;
   addMessage: (msg: ChatMessage) => void;
-  setGraphData: (nodes: GraphNodeData[], edges: GraphEdgeData[]) => void;
+  updateMessage: (id: string, update: Partial<ChatMessage>) => void;
+  addGraphData: (nodes: GraphNodeData[], edges: GraphEdgeData[]) => void;
   setProgress: (pct: number) => void;
   setStatus: (s: SessionState["status"]) => void;
   setSelectedModel: (m: string) => void;
@@ -67,7 +87,29 @@ export const useSession = create<SessionState>((set) => ({
   setSessionId: (id) => set({ sessionId: id }),
   addMessage: (msg) =>
     set((s) => ({ messages: [...s.messages, { ...msg, id: msg.id || `msg-${++msgCounter}` }] })),
-  setGraphData: (nodes, edges) => set({ graphNodes: nodes, graphEdges: edges }),
+  updateMessage: (id, update) =>
+    set((s) => ({
+      messages: s.messages.map((m) =>
+        m.id === id ? { ...m, ...update } : m
+      ),
+    })),
+  addGraphData: (nodes, edges) =>
+    set((s) => {
+      // Merge new nodes (deduplicate by node_id)
+      const existingIds = new Set(s.graphNodes.map((n) => n.node_id));
+      const newNodes = nodes.filter((n) => !existingIds.has(n.node_id));
+      // Merge new edges (deduplicate by source+target+type)
+      const existingEdgeKeys = new Set(
+        s.graphEdges.map((e) => `${e.source_node_id}-${e.target_node_id}-${e.edge_type}`)
+      );
+      const newEdges = edges.filter(
+        (e) => !existingEdgeKeys.has(`${e.source_node_id}-${e.target_node_id}-${e.edge_type}`)
+      );
+      return {
+        graphNodes: [...s.graphNodes, ...newNodes],
+        graphEdges: [...s.graphEdges, ...newEdges],
+      };
+    }),
   setProgress: (pct) => set({ progress: pct }),
   setStatus: (status) => set({ status }),
   setSelectedModel: (m) => set({ selectedModel: m }),
