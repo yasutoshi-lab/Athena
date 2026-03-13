@@ -33,6 +33,7 @@ class InferenceState(TypedDict, total=False):
     graph_edges: list[dict]
     ranked_hypotheses: list[dict]
     final_answer: str
+    references: list[dict]
 
 
 # Pipeline node progress mapping
