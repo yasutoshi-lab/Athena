@@ -154,6 +154,7 @@ export function useWebSocket(sessionId: number | null) {
             type: "ai",
             content: data.answer as string,
             variant: "answer",
+            references: (data.references as { title: string; url: string }[]) || [],
           });
           setProgress(100);
           break;

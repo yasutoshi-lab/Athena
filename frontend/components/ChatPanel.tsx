@@ -6,6 +6,7 @@ import {
   type HypothesisData,
   type ParsedQuestionData,
   type EvidenceSummaryData,
+  type ReferenceData,
 } from "@/hooks/useSession";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -298,24 +299,7 @@ function MessageItem({ msg, nickname }: { msg: ChatMessage; nickname: string }) 
   }
 
   if (msg.variant === "answer") {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 5, animation: "fadeUp 0.25s ease" }}>
-        <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)" }}>ATHENA</div>
-        <div
-          style={{
-            padding: "10px 13px",
-            borderRadius: 10,
-            background: "var(--bg-2)",
-            border: "1px solid var(--border)",
-            fontSize: 13.5,
-            lineHeight: 1.7,
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {msg.content}
-        </div>
-      </div>
-    );
+    return <AnswerCard content={msg.content} references={msg.references} />;
   }
 
   return (
@@ -555,6 +539,138 @@ function HypothesisCard({ hyp, index }: { hyp: HypothesisData; index: number }) 
         >
           {displayScore.toFixed(2)}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function AnswerCard({ content, references }: { content: string; references?: ReferenceData[] }) {
+  const [copied, setCopied] = useState(false);
+
+  // Split content: remove trailing reference list if present (already in structured references)
+  const parts = content.split(/\n---\n参照元[:：]?\n/);
+  const mainText = parts[0].trimEnd();
+
+  const handleCopy = () => {
+    // Build copyable text with references
+    let text = mainText;
+    if (references && references.length > 0) {
+      text += "\n\n---\n参照元:\n";
+      references.forEach((ref, i) => {
+        text += `[${i + 1}] ${ref.title}${ref.url ? ` - ${ref.url}` : ""}\n`;
+      });
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 5, animation: "fadeUp 0.25s ease" }}>
+      <div
+        style={{
+          fontFamily: "var(--mono)",
+          fontSize: 10,
+          color: "var(--text-2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        ATHENA
+        <button
+          onClick={handleCopy}
+          style={{
+            fontFamily: "var(--mono)",
+            fontSize: 9.5,
+            color: copied ? "#2dbe8a" : "var(--text-2)",
+            background: "var(--bg-2)",
+            border: "1px solid var(--border)",
+            borderRadius: 4,
+            padding: "2px 8px",
+            cursor: "pointer",
+            transition: "all 0.15s",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          {copied ? "✓ コピー済" : "📋 コピー"}
+        </button>
+      </div>
+      <div
+        style={{
+          padding: "12px 14px",
+          borderRadius: 10,
+          background: "var(--bg-2)",
+          border: "1px solid var(--border)",
+          fontSize: 13.5,
+          lineHeight: 1.7,
+          whiteSpace: "pre-wrap",
+        }}
+      >
+        {mainText}
+        {references && references.length > 0 && (
+          <div
+            style={{
+              marginTop: 14,
+              paddingTop: 10,
+              borderTop: "1px solid var(--border)",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--mono)",
+                fontSize: 10,
+                color: "var(--accent)",
+                letterSpacing: "0.06em",
+                marginBottom: 6,
+              }}
+            >
+              REFERENCES
+            </div>
+            {references.map((ref, i) => (
+              <div
+                key={i}
+                style={{
+                  fontSize: 12,
+                  lineHeight: 1.6,
+                  color: "var(--text-1)",
+                  marginBottom: 3,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--mono)",
+                    fontSize: 10,
+                    color: "var(--accent)",
+                    marginRight: 5,
+                  }}
+                >
+                  [{i + 1}]
+                </span>
+                {ref.url ? (
+                  <a
+                    href={ref.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: "var(--text-1)",
+                      textDecoration: "underline",
+                      textDecorationColor: "var(--border-md)",
+                      textUnderlineOffset: 2,
+                    }}
+                  >
+                    {ref.title || ref.url}
+                  </a>
+                ) : (
+                  <span>{ref.title}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

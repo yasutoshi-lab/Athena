@@ -1,6 +1,11 @@
 "use client";
 import { create } from "zustand";
 
+export interface ReferenceData {
+  title: string;
+  url: string;
+}
+
 export interface ChatMessage {
   id: string;
   type: "user" | "ai";
@@ -11,6 +16,7 @@ export interface ChatMessage {
   hypotheses?: HypothesisData[];
   parsedQuestion?: ParsedQuestionData;
   evidenceSummary?: EvidenceSummaryData;
+  references?: ReferenceData[];
 }
 
 export interface HypothesisData {

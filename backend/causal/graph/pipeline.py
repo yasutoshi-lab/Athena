@@ -352,6 +352,7 @@ async def run_pipeline(
                     {
                         "type": "final_answer",
                         "answer": node_output.get("final_answer", ""),
+                        "references": node_output.get("references", []),
                         "progress": 100,
                     }
                 )
