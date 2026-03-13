@@ -146,7 +146,7 @@ PostgreSQL（pgvector拡張付き）と Redis が起動します。
 source .venv/bin/activate
 
 # 依存パッケージのインストール
-pip install -e .
+python -m pip install -e .
 
 # マイグレーションの実行
 cd backend
