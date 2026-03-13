@@ -68,7 +68,7 @@ class Evidence(models.Model):
         Hypothesis, on_delete=models.CASCADE, related_name="evidences"
     )
     text = models.TextField()
-    source_url = models.URLField(blank=True)
+    source_url = models.TextField(blank=True)
     source_title = models.CharField(max_length=500, blank=True)
     stance = models.CharField(max_length=10, choices=Stance.choices)
     confidence = models.CharField(
