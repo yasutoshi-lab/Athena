@@ -548,13 +548,34 @@ function HypothesisCard({ hyp, index }: { hyp: HypothesisData; index: number }) 
   );
 }
 
-/** Render answer text with [N] references converted to clickable links. */
-function AnswerText({ text, references }: { text: string; references?: ReferenceData[] }) {
-  if (!references || references.length === 0) {
+/**
+ * Render answer text with [N] references converted to clickable links.
+ * Also parses any inline reference list in the original content as a
+ * fallback mapping (e.g. "[15] タイトル - https://...").
+ */
+function AnswerText({
+  text,
+  references,
+  fullContent,
+}: {
+  text: string;
+  references?: ReferenceData[];
+  fullContent: string;
+}) {
+  // Build a fallback map from inline references that Claude may embed
+  // e.g. "[15] Title - https://example.com"
+  const fallbackMap: Record<number, ReferenceData> = {};
+  const inlineRefPattern = /\[(\d+)\]\s*(.+?)\s*[-–—]\s*(https?:\/\/\S+)/g;
+  let m;
+  while ((m = inlineRefPattern.exec(fullContent)) !== null) {
+    fallbackMap[parseInt(m[1], 10)] = { title: m[2].trim(), url: m[3].trim() };
+  }
+
+  const hasAnyRef = (references && references.length > 0) || Object.keys(fallbackMap).length > 0;
+  if (!hasAnyRef) {
     return <>{text}</>;
   }
 
-  // Split text by [N] patterns and interleave with link elements
   const parts = text.split(/(\[\d+\])/g);
   return (
     <>
@@ -562,10 +583,10 @@ function AnswerText({ text, references }: { text: string; references?: Reference
         const match = part.match(/^\[(\d+)\]$/);
         if (!match) return <span key={i}>{part}</span>;
 
-        const refIndex = parseInt(match[1], 10) - 1;
-        const ref = references[refIndex];
+        const num = parseInt(match[1], 10);
+        // Try structured references first, then fallback map
+        const ref = references?.[num - 1] ?? fallbackMap[num];
         if (!ref || !ref.url) {
-          // No matching reference — render as-is
           return <span key={i}>{part}</span>;
         }
         return (
@@ -597,9 +618,12 @@ function AnswerText({ text, references }: { text: string; references?: Reference
 function AnswerCard({ content, references }: { content: string; references?: ReferenceData[] }) {
   const [copied, setCopied] = useState(false);
 
-  // Split content: remove trailing reference list if present (already in structured references)
-  const parts = content.split(/\n---\n参照元[:：]?\n/);
-  const mainText = parts[0].trimEnd();
+  // Strip trailing reference section that Claude may append despite instructions.
+  // Handles multiple formats: "---\n参照元:", "\n\n参照元:", "参照元：", etc.
+  const mainText = content
+    .replace(/\n-{2,}\n参照元[：:]?\s*\n[\s\S]*$/, "")
+    .replace(/\n{2,}参照元[：:]?\s*\n\[\d+\][\s\S]*$/, "")
+    .trimEnd();
 
   const handleCopy = () => {
     // Build copyable text with references
@@ -660,7 +684,7 @@ function AnswerCard({ content, references }: { content: string; references?: Ref
           whiteSpace: "pre-wrap",
         }}
       >
-        <AnswerText text={mainText} references={references} />
+        <AnswerText text={mainText} references={references} fullContent={content} />
         {references && references.length > 0 && (
           <div
             style={{
