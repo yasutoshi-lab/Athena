@@ -118,11 +118,26 @@ async def run_pipeline(
 
     await send_event({"type": "session_started", "session_id": session_id})
 
-    # Run pipeline with streaming
-    last_node = None
+    # Run synchronous pipeline.stream() in a thread to allow Django ORM calls
+    import asyncio
+    from concurrent.futures import ThreadPoolExecutor
+
+    loop = asyncio.get_event_loop()
+
+    def _run_sync():
+        """Execute the LangGraph pipeline synchronously in a worker thread."""
+        steps = []
+        for step in pipeline.stream(initial_state):
+            steps.append(step)
+        return steps
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        steps = await loop.run_in_executor(executor, _run_sync)
+
+    # Process results and send events
     final_state = None
 
-    for step in pipeline.stream(initial_state):
+    for step in steps:
         for node_name, node_output in step.items():
             # Send node started event
             icon, label = NODE_LABELS.get(node_name, ("⚙", node_name))
@@ -183,7 +198,6 @@ async def run_pipeline(
                 )
 
             final_state = node_output
-            last_node = node_name
 
         yield step
 
