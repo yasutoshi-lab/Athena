@@ -76,26 +76,7 @@ export default function MainPage() {
     reset();
   };
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "var(--bg-0)",
-          color: "var(--text-2)",
-          fontFamily: "var(--mono)",
-          fontSize: 13,
-        }}
-      >
-        読み込み中...
-      </div>
-    );
-  }
-
-  // --- Resizable divider ---
+  // --- Resizable divider (hooks must be before any early return) ---
   const MIN_CHAT_WIDTH = 300;
   const DEFAULT_CHAT_WIDTH = 380;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -130,6 +111,25 @@ export default function MainPage() {
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
   }, []);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--bg-0)",
+          color: "var(--text-2)",
+          fontFamily: "var(--mono)",
+          fontSize: 13,
+        }}
+      >
+        読み込み中...
+      </div>
+    );
+  }
 
   if (!user) return null;
 
