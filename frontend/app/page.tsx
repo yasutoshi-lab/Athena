@@ -13,7 +13,7 @@ export default function MainPage() {
   const router = useRouter();
   const { user, loading, loadUser } = useAuth();
   const { sessionId, setSessionId, addMessage, reset } = useSession();
-  const { connect, sendMessage } = useWebSocket(sessionId);
+  const { connect, sendMessage, stopInference, disconnect } = useWebSocket(sessionId);
 
   useEffect(() => {
     loadUser();
@@ -67,6 +67,15 @@ export default function MainPage() {
     }
   };
 
+  const handleStop = () => {
+    stopInference();
+  };
+
+  const handleClear = () => {
+    disconnect();
+    reset();
+  };
+
   if (loading) {
     return (
       <div
@@ -92,7 +101,7 @@ export default function MainPage() {
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <TopBar />
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        <ChatPanel onSend={handleSend} />
+        <ChatPanel onSend={handleSend} onStop={handleStop} onClear={handleClear} />
         <GraphPanel />
       </div>
     </div>

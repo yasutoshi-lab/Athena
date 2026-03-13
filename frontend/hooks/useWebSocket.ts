@@ -164,7 +164,21 @@ export function useWebSocket(sessionId: number | null) {
           setTimeout(() => setProgress(0), 500);
           break;
 
+        case "session_stopped":
+          setThinking(null);
+          setStatus("idle");
+          addMessage({
+            id: `stopped-${Date.now()}`,
+            type: "ai",
+            content: data.message as string,
+            variant: "step",
+            stepIcon: "■",
+            stepTag: "stopped",
+          });
+          break;
+
         case "error":
+          setThinking(null);
           setError(data.message as string);
           setStatus("error");
           break;
@@ -184,6 +198,12 @@ export function useWebSocket(sessionId: number | null) {
     [],
   );
 
+  const stopInference = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: "stop_inference" }));
+    }
+  }, []);
+
   const disconnect = useCallback(() => {
     wsRef.current?.close();
     wsRef.current = null;
@@ -193,7 +213,7 @@ export function useWebSocket(sessionId: number | null) {
     return () => disconnect();
   }, [disconnect]);
 
-  return { connect, sendMessage, disconnect };
+  return { connect, sendMessage, stopInference, disconnect };
 }
 
 // Types

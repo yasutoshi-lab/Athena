@@ -11,9 +11,11 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface ChatPanelProps {
   onSend: (query: string) => void;
+  onStop: () => void;
+  onClear: () => void;
 }
 
-export default function ChatPanel({ onSend }: ChatPanelProps) {
+export default function ChatPanel({ onSend, onStop, onClear }: ChatPanelProps) {
   const messages = useSession((s) => s.messages);
   const status = useSession((s) => s.status);
   const thinking = useSession((s) => s.thinking);
@@ -113,6 +115,60 @@ export default function ChatPanel({ onSend }: ChatPanelProps) {
 
       {/* Input */}
       <div style={{ padding: "12px 14px", borderTop: "1px solid var(--border)" }}>
+        {/* Action buttons row */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+          {status === "running" && (
+            <button
+              onClick={onStop}
+              style={{
+                flex: 1,
+                padding: "6px 0",
+                borderRadius: 6,
+                background: "rgba(212,87,87,0.12)",
+                border: "1px solid rgba(212,87,87,0.3)",
+                color: "#d45757",
+                fontFamily: "var(--mono)",
+                fontSize: 10.5,
+                letterSpacing: "0.04em",
+                cursor: "pointer",
+                transition: "all 0.15s",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 5,
+              }}
+            >
+              <span style={{ fontSize: 8 }}>■</span>
+              停止
+            </button>
+          )}
+          {messages.length > 0 && status !== "running" && (
+            <button
+              onClick={onClear}
+              style={{
+                flex: 1,
+                padding: "6px 0",
+                borderRadius: 6,
+                background: "var(--bg-2)",
+                border: "1px solid var(--border-md)",
+                color: "var(--text-2)",
+                fontFamily: "var(--mono)",
+                fontSize: 10.5,
+                letterSpacing: "0.04em",
+                cursor: "pointer",
+                transition: "all 0.15s",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 5,
+              }}
+            >
+              クリア
+            </button>
+          )}
+        </div>
+
+        {/* Input row */}
         <div
           style={{
             display: "flex",
