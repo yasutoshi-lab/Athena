@@ -2,7 +2,9 @@
 .venv/
 __pycache__/
 *.pyc
+*.egg-info/
 db.sqlite3
+uv.lock
 
 # Frontend
 frontend/node_modules/
