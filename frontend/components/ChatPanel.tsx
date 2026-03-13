@@ -548,6 +548,52 @@ function HypothesisCard({ hyp, index }: { hyp: HypothesisData; index: number }) 
   );
 }
 
+/** Render answer text with [N] references converted to clickable links. */
+function AnswerText({ text, references }: { text: string; references?: ReferenceData[] }) {
+  if (!references || references.length === 0) {
+    return <>{text}</>;
+  }
+
+  // Split text by [N] patterns and interleave with link elements
+  const parts = text.split(/(\[\d+\])/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        const match = part.match(/^\[(\d+)\]$/);
+        if (!match) return <span key={i}>{part}</span>;
+
+        const refIndex = parseInt(match[1], 10) - 1;
+        const ref = references[refIndex];
+        if (!ref || !ref.url) {
+          // No matching reference — render as-is
+          return <span key={i}>{part}</span>;
+        }
+        return (
+          <a
+            key={i}
+            href={ref.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`${ref.title || ""}\n${ref.url}`}
+            style={{
+              display: "inline",
+              fontFamily: "var(--mono)",
+              fontSize: 11,
+              color: "var(--accent)",
+              textDecoration: "none",
+              cursor: "pointer",
+              borderBottom: "1px dotted var(--accent)",
+              transition: "opacity 0.12s",
+            }}
+          >
+            {part}
+          </a>
+        );
+      })}
+    </>
+  );
+}
+
 function AnswerCard({ content, references }: { content: string; references?: ReferenceData[] }) {
   const [copied, setCopied] = useState(false);
 
@@ -614,7 +660,7 @@ function AnswerCard({ content, references }: { content: string; references?: Ref
           whiteSpace: "pre-wrap",
         }}
       >
-        {mainText}
+        <AnswerText text={mainText} references={references} />
         {references && references.length > 0 && (
           <div
             style={{
