@@ -1,50 +1,227 @@
-# Athena
+# Athena — 因果推論AIシステム
 
-このプロジェクトでは、"なぜ◯◯が起きたのか"という問を、下記のようなステップで検証する因果推論システムです
+「なぜ◯◯が起きたのか」という因果的な問いに対し、AIが複数の仮説を自動生成・検証し、その思考プロセスをリアルタイムで**知識グラフ**として可視化するシステムです。
 
-- 複数の因果仮説を自動生成
-- 各仮説を支持する証拠・反証をWeb検索, データ分析
-- 因果グラフを構築して可視化
-- 最も蓋然性の高い説明を根拠付きで提示
+## 主な機能
 
-## フレームワーク
+- ユーザーの問いからクエリ複雑度を判定し、使用モデル（Sonnet / Opus）を自動選択
+- 3〜5個の因果仮説を自動生成
+- Brave Search API によるWeb検索 + PDF解析で証拠・反証を収集
+- 証拠をベクトル化し PostgreSQL（pgvector）に保存・重複排除
+- 因果グラフを構築し、フロントエンドに WebSocket でリアルタイム配信
+- 最も蓋然性の高い仮説を根拠付きで提示
+- トークン使用量・コスト（USD）の追跡と可視化
 
-バックエンド: Django
-フロントエンド: Next.js
-データベース: PostgreSQL
-サンドボックス: DockerSnadbox
-ウェブ検索ツール: BraveSearchAPI
-エージェントSDK: Claude-Agent-SDK
+## 技術スタック
 
-## 主要ライブラリ
+| レイヤー | 技術 | 役割 |
+|---|---|---|
+| フロントエンド | Next.js 15 + TypeScript | UI全体・設定画面 |
+| グラフ描画 | D3.js (force-directed) | 知識グラフのインタラクティブ表示 |
+| 状態管理 | Zustand | 認証・セッション・グラフ状態 |
+| バックエンド | Django + Django Channels | REST API・WebSocket・認証 |
+| 認証 | Django Auth + SimpleJWT | JWT認証・複数ユーザー管理 |
+| AIパイプライン | LangGraph | 7ノード推論パイプライン制御 |
+| LLM | Claude Sonnet / Opus（自動切替） | 仮説生成・証拠評価・推論 |
+| Web検索 | Brave Search API | リアルタイム証拠収集 |
+| PDF解析 | PyMuPDF | 論文PDFのテキスト抽出 |
+| ベクトルDB | PostgreSQL + pgvector | 埋め込みによる類似検索・重複排除 |
+| 監視 | LangSmith | エージェント動作のトレース・評価 |
 
-- langchain
-- langgraph
-- langsmith
-- claude-agent-sdk
+## LangGraph パイプライン（7ノード構成）
+
+```
+START
+  │
+  ▼
+[ complexity_judge ]      ← クエリ複雑度を判定 → モデル（Sonnet/Opus）を選択
+  │
+  ▼
+[ question_parser ]       ← 問いを構造化（主語・述語・時間軸を抽出）
+  │
+  ▼
+[ hypothesis_generator ]  ← Claude で3〜5個の因果仮説を生成
+  │
+  ▼
+[ evidence_searcher ]     ← Brave API + PDF URLから証拠・反証を収集
+  │
+  ▼
+[ graph_builder ]         ← ノード・エッジを生成・pgvectorに保存
+  │
+  ▼
+[ hypothesis_ranker ]     ← スコアリング（証拠数・質・矛盾度を総合評価）
+  │
+  ▼
+[ answer_synthesizer ]    ← 最終説明文を根拠付きで生成
+  │
+  ▼
+END  ← token_usage を DB に記録
+```
+
+## 画面構成
+
+| 画面 | 説明 |
+|---|---|
+| ログイン画面 | メール/パスワード認証。JWT取得後にメイン画面へ遷移 |
+| メイン画面 | 左：チャットパネル / 右：D3.js 知識グラフの2ペイン |
+| 設定画面 | 一般（プロフィール・モデル選択）/ API使用量 / 外観 の3タブ |
+
+## ディレクトリ構成
+
+```
+athena/
+├── backend/
+│   ├── config/                   # Django設定（settings, urls, asgi）
+│   ├── causal/                   # 因果推論アプリ
+│   │   ├── agents/               # LangGraph 7ノード
+│   │   │   ├── complexity_judge.py
+│   │   │   ├── question_parser.py
+│   │   │   ├── hypothesis_generator.py
+│   │   │   ├── evidence_searcher.py
+│   │   │   ├── graph_builder.py
+│   │   │   ├── hypothesis_ranker.py
+│   │   │   └── answer_synthesizer.py
+│   │   ├── graph/pipeline.py     # LangGraph パイプライン定義
+│   │   ├── consumers.py          # WebSocket Consumer
+│   │   ├── middleware.py          # Token Usage Tracker
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── views.py
+│   │   └── urls.py
+│   ├── users/                    # 認証・設定アプリ
+│   │   ├── models.py             # UserSettings
+│   │   ├── views.py              # Auth / Settings API
+│   │   ├── serializers.py
+│   │   └── urls.py
+│   └── manage.py
+├── frontend/
+│   ├── app/
+│   │   ├── page.tsx              # メイン2ペイン
+│   │   ├── login/page.tsx        # ログイン画面
+│   │   └── settings/page.tsx     # 設定画面（3タブ）
+│   ├── components/
+│   │   ├── TopBar.tsx
+│   │   ├── ChatPanel.tsx
+│   │   └── GraphPanel.tsx        # D3.js 知識グラフ
+│   ├── hooks/
+│   │   ├── useAuth.ts            # JWT認証管理
+│   │   ├── useSession.ts         # セッション状態管理
+│   │   └── useWebSocket.ts       # WebSocket通信
+│   └── lib/api.ts                # API通信 + JWT自動リフレッシュ
+├── moc/                          # 設計書・UIモックアップ
+├── docker-compose.yml
+├── pyproject.toml
+├── init.sql
+├── .env.example
+└── .env
+```
 
 ## セットアップ
 
+### 前提条件
+
+- Python 3.12+
+- Node.js 22+
+- Docker / Docker Compose
+
+### 1. 環境変数の設定
+
+```bash
+cp .env.example .env
+# .env に各APIキーを設定
 ```
-# 仮想環境作成
-uv venv
 
-# ライブラリのインストール
-uv sync
+### 2. Docker コンテナの起動
 
-# .envの作成
-copy .env.example .env
-
-# 依存環境の起動
+```bash
 docker compose up -d
 ```
 
+PostgreSQL（pgvector拡張付き）と Redis が起動します。
+
+### 3. バックエンドのセットアップ
+
+```bash
+# 仮想環境の有効化
+source .venv/bin/activate
+
+# 依存パッケージのインストール
+pip install -e .
+
+# マイグレーションの実行
+cd backend
+python manage.py migrate
+
+# 管理ユーザーの作成
+python manage.py createsuperuser
+
+# 開発サーバーの起動（Daphne / ASGI）
+python manage.py runserver 8000
+```
+
+### 4. フロントエンドのセットアップ
+
+```bash
+cd frontend
+
+# 依存パッケージのインストール
+npm install
+
+# 開発サーバーの起動
+npm run dev
+```
+
+### 5. アクセス
+
+- フロントエンド: http://localhost:3000
+- バックエンドAPI: http://localhost:8000/api/
+- Django Admin: http://localhost:8000/admin/
+
+## API エンドポイント
+
+### 認証
+
+| エンドポイント | メソッド | 説明 |
+|---|---|---|
+| `/api/auth/login/` | POST | ユーザー名+パスワード → JWT発行 |
+| `/api/auth/refresh/` | POST | リフレッシュトークンでアクセストークンを更新 |
+| `/api/auth/logout/` | POST | リフレッシュトークンを無効化 |
+| `/api/auth/me/` | GET | ログイン中ユーザーのプロフィール取得 |
+
+### 推論セッション
+
+| エンドポイント | メソッド | 説明 |
+|---|---|---|
+| `/api/sessions/` | GET / POST | セッション一覧取得 / 新規作成 |
+| `/api/sessions/{id}/` | GET | セッション詳細（仮説・証拠含む） |
+| `/api/sessions/{id}/graph/` | GET | グラフノード・エッジ一覧 |
+| `/ws/sessions/{id}/` | WebSocket | 推論進捗のリアルタイムストリーミング |
+
+### 設定・使用量
+
+| エンドポイント | メソッド | 説明 |
+|---|---|---|
+| `/api/settings/` | GET / PUT | ユーザー設定の取得・更新 |
+| `/api/usage/` | GET | トークン使用量・コスト集計 |
+
+## データベース
+
+| テーブル | 説明 |
+|---|---|
+| `auth_user` | ユーザーアカウント（Django標準） |
+| `users_usersettings` | ユーザー設定（モデル選択・プロンプト・外観） |
+| `causal_session` | 推論セッション |
+| `causal_hypothesis` | 生成された仮説 |
+| `causal_evidence` | 証拠・反証（pgvector埋め込み付き） |
+| `causal_graphnode` | グラフノード（question/hypothesis/support/counter/concept） |
+| `causal_graphedge` | グラフエッジ（causal/support/counter/rel） |
+| `causal_tokenusage` | トークン使用量・コスト記録 |
 
 ## 参考ドキュメント
 
-[Claude-Agent-SDK-Python](https://github.com/anthropics/claude-agent-sdk-python?tab=readme-ov-file)
-[Claude API Docs](https://platform.claude.com/docs/ja/home)  
-[LangChain Docs Quickstart](https://docs.langchain.com/oss/python/langchain/quickstart)
-[LangGraph Overview](https://docs.langchain.com/oss/python/langgraph/overview)
-[LangSmith Docs](https://docs.langchain.com/langsmith/home)
-[Brave Search API](https://api-dashboard.search.brave.com/app/documentation/web-search/get-started)
+- [Anthropic Claude API](https://docs.anthropic.com/)
+- [LangGraph](https://langchain-ai.github.io/langgraph/)
+- [LangSmith](https://docs.smith.langchain.com/)
+- [Brave Search API](https://api-dashboard.search.brave.com/app/documentation/web-search/get-started)
+- [D3.js](https://d3js.org/)
+- [Django Channels](https://channels.readthedocs.io/)
