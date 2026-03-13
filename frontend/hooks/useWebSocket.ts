@@ -12,6 +12,7 @@ export function useWebSocket(sessionId: number | null) {
     setStatus,
     setSelectedModel,
     setError,
+    setThinking,
   } = useSession();
 
   const connect = useCallback(() => {
@@ -39,7 +40,7 @@ export function useWebSocket(sessionId: number | null) {
       setError("WebSocket接続エラー");
       wsRef.current = null;
     };
-  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError]);
+  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking]);
 
   const handleEvent = useCallback(
     (data: Record<string, unknown>) => {
@@ -48,7 +49,16 @@ export function useWebSocket(sessionId: number | null) {
           setStatus("running");
           break;
 
+        case "node_started":
+          setThinking({
+            node: data.node as string,
+            icon: data.icon as string,
+            label: data.label as string,
+          });
+          break;
+
         case "node_completed":
+          setThinking(null);
           addMessage({
             id: `step-${data.node}`,
             type: "ai",
@@ -149,6 +159,7 @@ export function useWebSocket(sessionId: number | null) {
           break;
 
         case "session_completed":
+          setThinking(null);
           setStatus("completed");
           setTimeout(() => setProgress(0), 500);
           break;
@@ -159,7 +170,7 @@ export function useWebSocket(sessionId: number | null) {
           break;
       }
     },
-    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError],
+    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking],
   );
 
   const sendMessage = useCallback(

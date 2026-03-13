@@ -16,6 +16,7 @@ interface ChatPanelProps {
 export default function ChatPanel({ onSend }: ChatPanelProps) {
   const messages = useSession((s) => s.messages);
   const status = useSession((s) => s.status);
+  const thinking = useSession((s) => s.thinking);
   const user = useAuth((s) => s.user);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
@@ -107,6 +108,7 @@ export default function ChatPanel({ onSend }: ChatPanelProps) {
         {messages.map((msg) => (
           <MessageItem key={msg.id} msg={msg} nickname={nickname} />
         ))}
+        {thinking && <ThinkingIndicator icon={thinking.icon} label={thinking.label} />}
       </div>
 
       {/* Input */}
@@ -500,4 +502,58 @@ function HypothesisCard({ hyp, index }: { hyp: HypothesisData; index: number }) 
       </div>
     </div>
   );
+}
+
+function ThinkingIndicator({ icon, label }: { icon: string; label: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 5,
+        animation: "fadeUp 0.25s ease",
+      }}
+    >
+      <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)" }}>ATHENA</div>
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "8px 12px",
+          borderRadius: 8,
+          background: "var(--bg-2)",
+          border: "1px solid var(--border)",
+          width: "fit-content",
+        }}
+      >
+        <span style={{ fontSize: 13 }}>{icon}</span>
+        <span
+          style={{
+            fontFamily: "var(--mono)",
+            fontSize: 11.5,
+            color: "var(--text-1)",
+          }}
+        >
+          {label}
+        </span>
+        <span className="thinking-dots" style={{ display: "inline-flex", gap: 3, marginLeft: 2 }}>
+          <span style={dotStyle(0)} />
+          <span style={dotStyle(1)} />
+          <span style={dotStyle(2)} />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function dotStyle(index: number): React.CSSProperties {
+  return {
+    width: 4,
+    height: 4,
+    borderRadius: "50%",
+    background: "var(--accent)",
+    opacity: 0.5,
+    animation: `thinkingDot 1.4s ${index * 0.2}s infinite ease-in-out`,
+  };
 }

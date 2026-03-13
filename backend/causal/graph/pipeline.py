@@ -80,6 +80,16 @@ def build_pipeline() -> StateGraph:
     return graph.compile()
 
 
+NODE_SEQUENCE = [
+    "complexity_judge",
+    "question_parser",
+    "hypothesis_generator",
+    "evidence_searcher",
+    "graph_builder",
+    "hypothesis_ranker",
+    "answer_synthesizer",
+]
+
 _SENTINEL = object()  # Marks end of queue
 
 
@@ -123,6 +133,17 @@ async def run_pipeline(
         logger.warning(f"Failed to load user settings: {e}")
 
     await send_event({"type": "session_started", "session_id": session_id})
+
+    # Send node_started for the first node
+    first_icon, first_label = NODE_LABELS[NODE_SEQUENCE[0]]
+    await send_event(
+        {
+            "type": "node_started",
+            "node": NODE_SEQUENCE[0],
+            "icon": first_icon,
+            "label": first_label,
+        }
+    )
 
     # Thread-safe queue for real-time streaming between worker thread and async loop
     eq = thread_queue.Queue()
@@ -334,6 +355,23 @@ async def run_pipeline(
                         "progress": 100,
                     }
                 )
+
+            # Send node_started for the next node in the sequence
+            try:
+                idx = NODE_SEQUENCE.index(node_name)
+                if idx + 1 < len(NODE_SEQUENCE):
+                    next_node = NODE_SEQUENCE[idx + 1]
+                    next_icon, next_label = NODE_LABELS[next_node]
+                    await send_event(
+                        {
+                            "type": "node_started",
+                            "node": next_node,
+                            "icon": next_icon,
+                            "label": next_label,
+                        }
+                    )
+            except ValueError:
+                pass
 
         yield step
 

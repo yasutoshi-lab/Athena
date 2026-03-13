@@ -51,6 +51,12 @@ export interface GraphEdgeData {
   edge_type: string;
 }
 
+export interface ThinkingState {
+  node: string;
+  icon: string;
+  label: string;
+}
+
 interface SessionState {
   sessionId: number | null;
   status: "idle" | "running" | "completed" | "error";
@@ -60,6 +66,7 @@ interface SessionState {
   progress: number;
   selectedModel: string;
   error: string | null;
+  thinking: ThinkingState | null;
 
   setSessionId: (id: number) => void;
   addMessage: (msg: ChatMessage) => void;
@@ -69,6 +76,7 @@ interface SessionState {
   setStatus: (s: SessionState["status"]) => void;
   setSelectedModel: (m: string) => void;
   setError: (e: string | null) => void;
+  setThinking: (t: ThinkingState | null) => void;
   reset: () => void;
 }
 
@@ -83,6 +91,7 @@ export const useSession = create<SessionState>((set) => ({
   progress: 0,
   selectedModel: "sonnet",
   error: null,
+  thinking: null,
 
   setSessionId: (id) => set({ sessionId: id }),
   addMessage: (msg) =>
@@ -114,6 +123,7 @@ export const useSession = create<SessionState>((set) => ({
   setStatus: (status) => set({ status }),
   setSelectedModel: (m) => set({ selectedModel: m }),
   setError: (e) => set({ error: e }),
+  setThinking: (t) => set({ thinking: t }),
   reset: () =>
     set({
       sessionId: null,
@@ -124,5 +134,6 @@ export const useSession = create<SessionState>((set) => ({
       progress: 0,
       selectedModel: "sonnet",
       error: null,
+      thinking: null,
     }),
 }));

@@ -70,3 +70,7 @@ input, textarea { font-family: var(--font); color: inherit; background: none; bo
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.5); }
 }
+@keyframes thinkingDot {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1.2); }
+}
