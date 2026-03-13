@@ -1,7 +1,7 @@
 services:
   postgres:
     image: pgvector/pgvector:pg17
-    container_name: athena-postgresql-pg17
+    container_name: athena-postgres
     ports:
       - "5432:5432"
     environment:
@@ -12,7 +12,18 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U raguser -d document_rag"]
+      test: ["CMD-SHELL", "pg_isready -U ciuser -d causal-inference"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: athena-redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
