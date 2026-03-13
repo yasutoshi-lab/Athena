@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useSession } from "@/hooks/useSession";
@@ -95,13 +95,89 @@ export default function MainPage() {
     );
   }
 
+  // --- Resizable divider ---
+  const MIN_CHAT_WIDTH = 300;
+  const DEFAULT_CHAT_WIDTH = 380;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [chatWidth, setChatWidth] = useState(DEFAULT_CHAT_WIDTH);
+  const dragging = useRef(false);
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragging.current = true;
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!dragging.current || !containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const maxWidth = containerRect.width * 0.5; // 50% limit
+      const newWidth = Math.min(
+        Math.max(ev.clientX - containerRect.left, MIN_CHAT_WIDTH),
+        maxWidth,
+      );
+      setChatWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      dragging.current = false;
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  }, []);
+
   if (!user) return null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <TopBar />
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        <ChatPanel onSend={handleSend} onStop={handleStop} onClear={handleClear} />
+      <div ref={containerRef} style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        <ChatPanel onSend={handleSend} onStop={handleStop} onClear={handleClear} width={chatWidth} />
+        {/* Drag handle */}
+        <div
+          onMouseDown={onMouseDown}
+          style={{
+            width: 6,
+            flexShrink: 0,
+            cursor: "col-resize",
+            background: "transparent",
+            position: "relative",
+            zIndex: 50,
+          }}
+        >
+          {/* Visible line */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              left: 2,
+              width: 1,
+              background: "var(--border)",
+              transition: "background 0.15s",
+            }}
+          />
+          {/* Hover/active indicator */}
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 4,
+              height: 32,
+              borderRadius: 2,
+              background: "var(--text-2)",
+              opacity: 0.25,
+              transition: "opacity 0.15s",
+            }}
+          />
+        </div>
         <GraphPanel />
       </div>
     </div>

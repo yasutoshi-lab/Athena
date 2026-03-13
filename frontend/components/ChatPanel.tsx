@@ -15,9 +15,10 @@ interface ChatPanelProps {
   onSend: (query: string) => void;
   onStop: () => void;
   onClear: () => void;
+  width?: number;
 }
 
-export default function ChatPanel({ onSend, onStop, onClear }: ChatPanelProps) {
+export default function ChatPanel({ onSend, onStop, onClear, width }: ChatPanelProps) {
   const messages = useSession((s) => s.messages);
   const status = useSession((s) => s.status);
   const thinking = useSession((s) => s.thinking);
@@ -51,7 +52,7 @@ export default function ChatPanel({ onSend, onStop, onClear }: ChatPanelProps) {
   return (
     <div
       style={{
-        width: 380,
+        width: width ?? 380,
         flexShrink: 0,
         background: "var(--bg-1)",
         borderRight: "1px solid var(--border)",
