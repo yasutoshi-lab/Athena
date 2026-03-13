@@ -219,7 +219,13 @@ async def _save_results(session_id: int, state: dict):
         session = Session.objects.get(id=session_id)
         session.status = Session.Status.COMPLETED
         session.complexity_score = state.get("complexity_score")
-        session.selected_model = state.get("selected_model", "sonnet")
+        # Convert full model name to short name for DB storage
+        full_model = state.get("selected_model", "sonnet")
+        model_short = {
+            "claude-sonnet-4-20250514": "sonnet",
+            "claude-opus-4-20250514": "opus",
+        }
+        session.selected_model = model_short.get(full_model, full_model)
         session.save()
 
         # Save hypotheses
