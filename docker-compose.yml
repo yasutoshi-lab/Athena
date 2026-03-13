@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: athena-postgresql-pg17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: causal-inference
+      POSTGRES_USER: ciuser
+      POSTGRES_PASSWORD: cipass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raguser -d document_rag"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
