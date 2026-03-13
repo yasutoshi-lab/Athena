@@ -1,12 +1,11 @@
 """Node 4: Evidence searcher - collects evidence via Brave Search + PDF."""
-import json
 import logging
-from typing import Optional
 
 import httpx
 from anthropic import Anthropic
 from django.conf import settings
 
+from . import extract_json
 from ..middleware import record_token_usage
 
 logger = logging.getLogger(__name__)
@@ -35,38 +34,37 @@ EVIDENCE_ANALYSIS_PROMPT = """あなたは証拠評価の専門家です。
 各検索結果が仮説を支持するか反証するかを判断し、関連する証拠のみを含めてください。"""
 
 
-async def _brave_search(query: str, count: int = 5) -> list[dict]:
+def _brave_search(query: str, count: int = 5) -> list[dict]:
     api_key = settings.BRAVE_API_KEY
     if not api_key:
         logger.warning("Brave API key not configured")
         return []
 
-    async with httpx.AsyncClient() as client:
-        try:
-            resp = await client.get(
-                "https://api.search.brave.com/res/v1/web/search",
-                params={"q": query, "count": count, "search_lang": "jp"},
-                headers={
-                    "Accept": "application/json",
-                    "Accept-Encoding": "gzip",
-                    "X-Subscription-Token": api_key,
-                },
-                timeout=15.0,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            results = data.get("web", {}).get("results", [])
-            return [
-                {
-                    "title": r.get("title", ""),
-                    "url": r.get("url", ""),
-                    "description": r.get("description", ""),
-                }
-                for r in results
-            ]
-        except Exception as e:
-            logger.error(f"Brave search error: {e}")
-            return []
+    try:
+        resp = httpx.get(
+            "https://api.search.brave.com/res/v1/web/search",
+            params={"q": query, "count": count, "search_lang": "jp"},
+            headers={
+                "Accept": "application/json",
+                "Accept-Encoding": "gzip",
+                "X-Subscription-Token": api_key,
+            },
+            timeout=15.0,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        results = data.get("web", {}).get("results", [])
+        return [
+            {
+                "title": r.get("title", ""),
+                "url": r.get("url", ""),
+                "description": r.get("description", ""),
+            }
+            for r in results
+        ]
+    except Exception as e:
+        logger.error(f"Brave search error: {e}")
+        return []
 
 
 def _analyze_evidence(
@@ -108,17 +106,14 @@ def _analyze_evidence(
     )
 
     text = response.content[0].text
-    try:
-        result = json.loads(text)
-        return result.get("evidences", [])
-    except json.JSONDecodeError:
-        logger.warning("Failed to parse evidence analysis response")
-        return []
+    result = extract_json(text)
+    if result is not None:
+        return result.get("evidences", []) if isinstance(result, dict) else result
+    logger.warning("Failed to parse evidence analysis response")
+    return []
 
 
 def evidence_searcher(state: dict) -> dict:
-    import asyncio
-
     query = state["query"]
     session_id = state["session_id"]
     model = state["selected_model"]
@@ -129,12 +124,8 @@ def evidence_searcher(state: dict) -> dict:
     for i, hyp in enumerate(hypotheses):
         search_query = f"{query} {hyp['text']}"
 
-        # Run brave search
-        loop = asyncio.new_event_loop()
-        try:
-            search_results = loop.run_until_complete(_brave_search(search_query))
-        finally:
-            loop.close()
+        # Run brave search (synchronous)
+        search_results = _brave_search(search_query)
 
         # Analyze search results
         evidences = _analyze_evidence(hyp["text"], search_results, model, session_id)

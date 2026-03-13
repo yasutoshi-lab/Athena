@@ -1,10 +1,10 @@
 """Node 2: Question parser - structures the raw query."""
-import json
 import logging
 
 from anthropic import Anthropic
 from django.conf import settings
 
+from . import extract_json
 from ..middleware import record_token_usage
 
 logger = logging.getLogger(__name__)
@@ -45,9 +45,8 @@ def question_parser(state: dict) -> dict:
     )
 
     text = response.content[0].text
-    try:
-        parsed = json.loads(text)
-    except json.JSONDecodeError:
+    parsed = extract_json(text)
+    if parsed is None:
         parsed = {
             "main_question": query,
             "subject": "",

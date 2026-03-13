@@ -1,10 +1,10 @@
 """Node 3: Hypothesis generator - generates causal hypotheses."""
-import json
 import logging
 
 from anthropic import Anthropic
 from django.conf import settings
 
+from . import extract_json
 from ..middleware import record_token_usage
 
 logger = logging.getLogger(__name__)
@@ -62,10 +62,10 @@ def hypothesis_generator(state: dict) -> dict:
     )
 
     text = response.content[0].text
-    try:
-        result = json.loads(text)
-        hypotheses = result.get("hypotheses", [])
-    except json.JSONDecodeError:
+    result = extract_json(text)
+    if result is not None:
+        hypotheses = result.get("hypotheses", []) if isinstance(result, dict) else result
+    else:
         hypotheses = [
             {
                 "text": "仮説の生成に失敗しました",

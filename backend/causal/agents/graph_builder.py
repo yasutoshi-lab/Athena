@@ -1,10 +1,10 @@
 """Node 5: Graph builder - constructs knowledge graph nodes and edges."""
-import json
 import logging
 
 from anthropic import Anthropic
 from django.conf import settings
 
+from . import extract_json
 from ..middleware import record_token_usage
 
 logger = logging.getLogger(__name__)
@@ -133,10 +133,10 @@ def graph_builder(state: dict) -> dict:
             node_name="graph_builder",
         )
 
-        try:
-            result = json.loads(response.content[0].text)
-            concepts = result.get("concepts", [])
-        except json.JSONDecodeError:
+        result = extract_json(response.content[0].text)
+        if result is not None:
+            concepts = result.get("concepts", []) if isinstance(result, dict) else result
+        else:
             concepts = []
 
         for i, concept in enumerate(concepts):

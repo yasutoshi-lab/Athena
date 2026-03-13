@@ -1,10 +1,10 @@
 """Node 6: Hypothesis ranker - re-scores hypotheses based on evidence."""
-import json
 import logging
 
 from anthropic import Anthropic
 from django.conf import settings
 
+from . import extract_json
 from ..middleware import record_token_usage
 
 logger = logging.getLogger(__name__)
@@ -82,10 +82,10 @@ def hypothesis_ranker(state: dict) -> dict:
     )
 
     text = response.content[0].text
-    try:
-        result = json.loads(text)
-        ranked = result.get("ranked_hypotheses", [])
-    except json.JSONDecodeError:
+    result = extract_json(text)
+    if result is not None:
+        ranked = result.get("ranked_hypotheses", []) if isinstance(result, dict) else result
+    else:
         ranked = [
             {"index": i, "score": hyp.get("initial_score", 0.5)}
             for i, hyp in enumerate(hypotheses)

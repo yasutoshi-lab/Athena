@@ -1,10 +1,10 @@
 """Node 1: Query complexity judgment and model selection."""
-import json
 import logging
 
 from anthropic import Anthropic
 from django.conf import settings
 
+from . import extract_json
 from ..middleware import record_token_usage
 
 logger = logging.getLogger(__name__)
@@ -47,9 +47,8 @@ def complexity_judge(state: dict) -> dict:
 
     # Parse response
     text = response.content[0].text
-    try:
-        result = json.loads(text)
-    except json.JSONDecodeError:
+    result = extract_json(text)
+    if result is None:
         # Fallback: simple heuristic
         entity_count = len(query.split()) // 5
         result = {
