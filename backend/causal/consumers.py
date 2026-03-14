@@ -65,7 +65,7 @@ class InferenceConsumer(AsyncJsonWebsocketConsumer):
         except Exception as e:
             logger.exception("Pipeline error")
             await self.send_json(
-                {"type": "error", "message": f"推論エラー: {str(e)}"}
+                {"type": "error", "message": _friendly_error(e)}
             )
         finally:
             self._pipeline_task = None
@@ -92,7 +92,7 @@ class InferenceConsumer(AsyncJsonWebsocketConsumer):
         except Exception as e:
             logger.exception("Follow-up error")
             await self.send_json(
-                {"type": "error", "message": f"応答エラー: {str(e)}"}
+                {"type": "error", "message": _friendly_error(e)}
             )
 
     @database_sync_to_async
@@ -148,3 +148,11 @@ class InferenceConsumer(AsyncJsonWebsocketConsumer):
     # Handler for group messages
     async def inference_event(self, event):
         await self.send_json(event["data"])
+
+
+def _friendly_error(exc: Exception) -> str:
+    """Convert known API errors to user-friendly Japanese messages."""
+    msg = str(exc)
+    if "credit balance is too low" in msg:
+        return "AnthropicのAPIクレジット残高が不足しています。コンソールでクレジットを追加してください。"
+    return f"推論エラー: {msg}"
