@@ -217,6 +217,48 @@ npm run dev
 | `causal_graphedge` | グラフエッジ（causal/support/counter/rel） |
 | `causal_tokenusage` | トークン使用量・コスト記録 |
 
+## ドキュメント一覧
+
+### 日本語 (doc/jp/)
+
+**フロントエンド**
+- [ログイン画面](doc/jp/frontend/01_login.md) — 認証画面の概要・配置図・使い方
+- [メイン画面](doc/jp/frontend/02_main.md) — 3パネル構成（セッション一覧・推論チャット・知識グラフ）
+- [設定画面](doc/jp/frontend/03_settings.md) — 一般・API使用量・外観の各タブ
+
+**バックエンド**
+- [認証 API](doc/jp/backend/01_auth.md) — JWT認証（ログイン・トークン更新・ログアウト）
+- [セッション API](doc/jp/backend/02_sessions.md) — セッション CRUD・グラフデータ取得
+- [WebSocket API](doc/jp/backend/03_websocket.md) — リアルタイム推論・7ノードパイプライン
+- [設定・使用量 API](doc/jp/backend/04_settings_usage.md) — ユーザー設定・トークン使用量統計
+
+**データベース**
+- [PostgreSQL](doc/jp/db/postgresql.md) — テーブル設計・ER図・pgvector
+- [Redis](doc/jp/db/redis.md) — Channel Layer設計・接続情報
+
+**Docker**
+- [Docker 運用ガイド](doc/jp/docker/docker.md) — セットアップ・リビルド・トラブルシューティング
+
+### English (doc/en/)
+
+**Frontend**
+- [Login Screen](doc/en/frontend/01_login.md) — Authentication screen overview & layout
+- [Main Screen](doc/en/frontend/02_main.md) — 3-panel layout (Sessions, Chat, Knowledge Graph)
+- [Settings Screen](doc/en/frontend/03_settings.md) — General, API Usage, Appearance tabs
+
+**Backend**
+- [Authentication API](doc/en/backend/01_auth.md) — JWT auth (login, refresh, logout)
+- [Sessions API](doc/en/backend/02_sessions.md) — Session CRUD & graph data
+- [WebSocket API](doc/en/backend/03_websocket.md) — Real-time inference & 7-node pipeline
+- [Settings & Usage API](doc/en/backend/04_settings_usage.md) — User settings & token usage stats
+
+**Database**
+- [PostgreSQL](doc/en/db/postgresql.md) — Table design, ER diagram, pgvector
+- [Redis](doc/en/db/redis.md) — Channel Layer design & connection info
+
+**Docker**
+- [Docker Operations Guide](doc/en/docker/docker.md) — Setup, rebuild, troubleshooting
+
 ## 参考ドキュメント
 
 - [Anthropic Claude API](https://docs.anthropic.com/)
