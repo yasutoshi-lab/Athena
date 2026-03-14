@@ -150,6 +150,11 @@ export default function MainPage() {
     reset();
   };
 
+  const handleSessionDeleted = (id: number) => {
+    disconnect();
+    reset();
+  };
+
   // --- Resizable divider (hooks must be before any early return) ---
   const MIN_CHAT_WIDTH = 300;
   const DEFAULT_CHAT_WIDTH = 380;
@@ -220,6 +225,7 @@ export default function MainPage() {
             onSelectSession={handleSelectSession}
             onNewSession={handleNewSession}
             onClose={() => setIsSidebarOpen(false)}
+            onSessionDeleted={handleSessionDeleted}
           />
         )}
         <ChatPanel onSend={handleSend} onStop={handleStop} onClear={handleClear} width={chatWidth} />

@@ -31,13 +31,25 @@ def session_list(request):
     )
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
 def session_detail(request, session_id):
     try:
         session = Session.objects.get(id=session_id, user=request.user)
     except Session.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "DELETE":
+        session.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    if request.method == "PATCH":
+        title = request.data.get("title")
+        if title is not None:
+            session.title = title
+            session.save(update_fields=["title"])
+        return Response(SessionDetailSerializer(session).data)
+
     serializer = SessionDetailSerializer(session)
     return Response(serializer.data)
 

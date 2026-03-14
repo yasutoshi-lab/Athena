@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
 
 interface SessionItem {
@@ -15,6 +15,7 @@ interface SessionSidebarProps {
   onSelectSession: (id: number) => void;
   onNewSession: () => void;
   onClose: () => void;
+  onSessionDeleted?: (id: number) => void;
 }
 
 function groupByDate(sessions: SessionItem[]) {
@@ -43,9 +44,14 @@ export default function SessionSidebar({
   onSelectSession,
   onNewSession,
   onClose,
+  onSessionDeleted,
 }: SessionSidebarProps) {
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const loadSessions = () => {
     api.getSessions().then((data) => {
@@ -58,12 +64,23 @@ export default function SessionSidebar({
     loadSessions();
   }, []);
 
-  // Reload when currentSessionId changes (new session created)
   useEffect(() => {
     if (currentSessionId) {
       loadSessions();
     }
   }, [currentSessionId]);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (menuOpenId === null) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpenId]);
 
   const groups = groupByDate(sessions);
 
@@ -77,20 +94,56 @@ export default function SessionSidebar({
     return colors[status] || "var(--text-2)";
   };
 
-  // Update a session title in-place (called from parent via ref or event)
   const updateTitle = (id: number, title: string) => {
     setSessions((prev) =>
       prev.map((s) => (s.id === id ? { ...s, title } : s))
     );
   };
 
-  // Expose updateTitle via a global so useWebSocket can call it
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__athena_updateSessionTitle = updateTitle;
     return () => {
       delete (window as unknown as Record<string, unknown>).__athena_updateSessionTitle;
     };
   }, []);
+
+  const handleDelete = async (id: number) => {
+    setMenuOpenId(null);
+    try {
+      await api.deleteSession(id);
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+      if (currentSessionId === id) {
+        onSessionDeleted?.(id);
+      }
+    } catch (e) {
+      console.error("Failed to delete session", e);
+    }
+  };
+
+  const handleStartEdit = (s: SessionItem) => {
+    setMenuOpenId(null);
+    setEditingId(s.id);
+    setEditTitle(s.title || s.query.slice(0, 30));
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingId === null) return;
+    try {
+      await api.updateSession(editingId, { title: editTitle });
+      setSessions((prev) =>
+        prev.map((s) => (s.id === editingId ? { ...s, title: editTitle } : s))
+      );
+    } catch (e) {
+      console.error("Failed to update session", e);
+    }
+    setEditingId(null);
+    setEditTitle("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditTitle("");
+  };
 
   return (
     <div
@@ -195,63 +248,298 @@ export default function SessionSidebar({
                 {group.label}
               </div>
               {group.items.map((s) => (
-                <button
+                <SessionRow
                   key={s.id}
-                  onClick={() => onSelectSession(s.id)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    textAlign: "left",
-                    background:
-                      s.id === currentSessionId
-                        ? "var(--bg-2)"
-                        : "transparent",
-                    border: "none",
-                    borderLeft:
-                      s.id === currentSessionId
-                        ? "2px solid var(--accent)"
-                        : "2px solid transparent",
-                    cursor: "pointer",
-                    transition: "all 0.12s",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 7,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 5,
-                      height: 5,
-                      borderRadius: "50%",
-                      background: statusDot(s.status),
-                      flexShrink: 0,
-                      animation:
-                        s.status === "running"
-                          ? "pulse 1.5s infinite"
-                          : "none",
-                    }}
-                  />
-                  <div
-                    style={{
-                      flex: 1,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      fontSize: 12,
-                      color:
-                        s.id === currentSessionId
-                          ? "var(--text-0)"
-                          : "var(--text-1)",
-                    }}
-                  >
-                    {s.title || s.query.slice(0, 30)}
-                  </div>
-                </button>
+                  session={s}
+                  isActive={s.id === currentSessionId}
+                  isEditing={editingId === s.id}
+                  editTitle={editTitle}
+                  menuOpen={menuOpenId === s.id}
+                  menuRef={menuOpenId === s.id ? menuRef : undefined}
+                  statusColor={statusDot(s.status)}
+                  onSelect={() => onSelectSession(s.id)}
+                  onMenuToggle={() =>
+                    setMenuOpenId(menuOpenId === s.id ? null : s.id)
+                  }
+                  onEdit={() => handleStartEdit(s)}
+                  onDelete={() => handleDelete(s.id)}
+                  onEditTitleChange={setEditTitle}
+                  onSaveEdit={handleSaveEdit}
+                  onCancelEdit={handleCancelEdit}
+                />
               ))}
             </div>
           ))
         )}
       </div>
+    </div>
+  );
+}
+
+function SessionRow({
+  session,
+  isActive,
+  isEditing,
+  editTitle,
+  menuOpen,
+  menuRef,
+  statusColor,
+  onSelect,
+  onMenuToggle,
+  onEdit,
+  onDelete,
+  onEditTitleChange,
+  onSaveEdit,
+  onCancelEdit,
+}: {
+  session: SessionItem;
+  isActive: boolean;
+  isEditing: boolean;
+  editTitle: string;
+  menuOpen: boolean;
+  menuRef?: React.RefObject<HTMLDivElement | null>;
+  statusColor: string;
+  onSelect: () => void;
+  onMenuToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onEditTitleChange: (v: string) => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+}) {
+  if (isEditing) {
+    return (
+      <div
+        style={{
+          padding: "6px 10px",
+          borderLeft: isActive
+            ? "2px solid var(--accent)"
+            : "2px solid transparent",
+          background: "var(--bg-2)",
+        }}
+      >
+        <input
+          autoFocus
+          value={editTitle}
+          onChange={(e) => onEditTitleChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSaveEdit();
+            if (e.key === "Escape") onCancelEdit();
+          }}
+          style={{
+            width: "100%",
+            fontSize: 12,
+            padding: "4px 6px",
+            borderRadius: 4,
+            border: "1px solid var(--border-md)",
+            background: "var(--bg-1)",
+            color: "var(--text-0)",
+            marginBottom: 4,
+          }}
+        />
+        <div style={{ display: "flex", gap: 4 }}>
+          <button
+            onClick={onSaveEdit}
+            style={{
+              flex: 1,
+              padding: "3px 0",
+              borderRadius: 4,
+              background: "var(--accent)",
+              color: "#fff",
+              fontSize: 10,
+              fontFamily: "var(--mono)",
+              cursor: "pointer",
+              border: "none",
+            }}
+          >
+            保存
+          </button>
+          <button
+            onClick={onCancelEdit}
+            style={{
+              flex: 1,
+              padding: "3px 0",
+              borderRadius: 4,
+              background: "var(--bg-3)",
+              color: "var(--text-1)",
+              fontSize: 10,
+              fontFamily: "var(--mono)",
+              cursor: "pointer",
+              border: "1px solid var(--border)",
+            }}
+          >
+            キャンセル
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+      }}
+    >
+      <button
+        onClick={onSelect}
+        style={{
+          flex: 1,
+          padding: "8px 28px 8px 12px",
+          textAlign: "left",
+          background: isActive ? "var(--bg-2)" : "transparent",
+          border: "none",
+          borderLeft: isActive
+            ? "2px solid var(--accent)"
+            : "2px solid transparent",
+          cursor: "pointer",
+          transition: "all 0.12s",
+          display: "flex",
+          alignItems: "center",
+          gap: 7,
+          minWidth: 0,
+        }}
+      >
+        <div
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: "50%",
+            background: statusColor,
+            flexShrink: 0,
+            animation:
+              session.status === "running" ? "pulse 1.5s infinite" : "none",
+          }}
+        />
+        <div
+          style={{
+            flex: 1,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            fontSize: 12,
+            color: isActive ? "var(--text-0)" : "var(--text-1)",
+          }}
+        >
+          {session.title || session.query.slice(0, 30)}
+        </div>
+      </button>
+
+      {/* Three-dot menu button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onMenuToggle();
+        }}
+        style={{
+          position: "absolute",
+          right: 4,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 20,
+          height: 20,
+          borderRadius: 4,
+          background: menuOpen ? "var(--bg-3)" : "transparent",
+          border: "none",
+          color: "var(--text-2)",
+          fontSize: 12,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: menuOpen ? 1 : 0,
+          transition: "opacity 0.1s",
+        }}
+        className="session-menu-btn"
+      >
+        ···
+      </button>
+
+      {/* Dropdown menu */}
+      {menuOpen && (
+        <div
+          ref={menuRef}
+          style={{
+            position: "absolute",
+            right: 4,
+            top: "100%",
+            zIndex: 100,
+            background: "var(--bg-1)",
+            border: "1px solid var(--border-md)",
+            borderRadius: 6,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+            overflow: "hidden",
+            minWidth: 100,
+          }}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            style={{
+              width: "100%",
+              padding: "7px 12px",
+              textAlign: "left",
+              fontSize: 12,
+              color: "var(--text-0)",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              transition: "background 0.1s",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            onMouseEnter={(e) =>
+              ((e.target as HTMLElement).style.background = "var(--bg-2)")
+            }
+            onMouseLeave={(e) =>
+              ((e.target as HTMLElement).style.background = "transparent")
+            }
+          >
+            編集
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            style={{
+              width: "100%",
+              padding: "7px 12px",
+              textAlign: "left",
+              fontSize: 12,
+              color: "#d45757",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              transition: "background 0.1s",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            onMouseEnter={(e) =>
+              ((e.target as HTMLElement).style.background =
+                "rgba(212,87,87,0.08)")
+            }
+            onMouseLeave={(e) =>
+              ((e.target as HTMLElement).style.background = "transparent")
+            }
+          >
+            削除
+          </button>
+        </div>
+      )}
+
+      {/* CSS to show menu button on hover */}
+      <style jsx>{`
+        div:hover .session-menu-btn {
+          opacity: 1 !important;
+        }
+      `}</style>
     </div>
   );
 }

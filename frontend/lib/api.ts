@@ -115,6 +115,22 @@ export const api = {
     return res.json();
   },
 
+  async deleteSession(id: number) {
+    const res = await fetchWithAuth(`/sessions/${id}/`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete session");
+  },
+
+  async updateSession(id: number, data: Record<string, unknown>) {
+    const res = await fetchWithAuth(`/sessions/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update session");
+    return res.json();
+  },
+
   async getGraph(sessionId: number) {
     const res = await fetchWithAuth(`/sessions/${sessionId}/graph/`);
     if (!res.ok) throw new Error("Failed to get graph");
