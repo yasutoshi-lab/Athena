@@ -259,6 +259,12 @@ export function useWebSocket(sessionId: number | null) {
           setThinking(null);
           setError(data.message as string);
           setStatus("error");
+          addMessage({
+            id: `error-${Date.now()}`,
+            type: "ai",
+            content: data.message as string,
+            variant: "bubble",
+          });
           break;
       }
     },
