@@ -2,6 +2,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useSession } from "@/hooks/useSession";
 import { useRouter, usePathname } from "next/navigation";
+import { useLocale } from "@/hooks/useLocale";
 
 interface TopBarProps {
   onSidebarToggle?: () => void;
@@ -14,11 +15,12 @@ export default function TopBar({ onSidebarToggle, isSidebarOpen }: TopBarProps) 
   const selectedModel = useSession((s) => s.selectedModel);
   const router = useRouter();
   const pathname = usePathname();
+  const t = useLocale((s) => s.t);
 
   const isRunning = status === "running";
   const modelLabel = selectedModel.includes("opus")
-    ? `Opus — ${isRunning ? "推論中" : "待機中"}`
-    : `Sonnet — ${isRunning ? "推論中" : "待機中"}`;
+    ? `Opus — ${isRunning ? t("topbar.reasoning") : t("topbar.idle")}`
+    : `Sonnet — ${isRunning ? t("topbar.reasoning") : t("topbar.idle")}`;
 
   const nickname =
     user?.settings?.nickname ||
@@ -97,7 +99,7 @@ export default function TopBar({ onSidebarToggle, isSidebarOpen }: TopBarProps) 
               transition: "all 0.15s",
             }}
           >
-            セッション一覧
+            {t("topbar.sessions")}
           </button>
         )}
         <button
@@ -112,7 +114,7 @@ export default function TopBar({ onSidebarToggle, isSidebarOpen }: TopBarProps) 
             transition: "all 0.15s",
           }}
         >
-          推論チャット
+          {t("topbar.chat")}
         </button>
         <button
           onClick={() => router.push("/settings")}
@@ -126,7 +128,7 @@ export default function TopBar({ onSidebarToggle, isSidebarOpen }: TopBarProps) 
             transition: "all 0.15s",
           }}
         >
-          設定
+          {t("topbar.settings")}
         </button>
       </div>
 

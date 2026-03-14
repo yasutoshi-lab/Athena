@@ -10,6 +10,7 @@ import {
   type SearchActivityItem,
 } from "@/hooks/useSession";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocale } from "@/hooks/useLocale";
 
 interface ChatPanelProps {
   onSend: (query: string) => void;
@@ -24,6 +25,7 @@ export default function ChatPanel({ onSend, onStop, onClear, width }: ChatPanelP
   const thinking = useSession((s) => s.thinking);
   const searchActivities = useSession((s) => s.searchActivities);
   const user = useAuth((s) => s.user);
+  const t = useLocale((s) => s.t);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
 
@@ -47,7 +49,7 @@ export default function ChatPanel({ onSend, onStop, onClear, width }: ChatPanelP
     }
   };
 
-  const nickname = user?.settings?.nickname || user?.username || "あなた";
+  const nickname = user?.settings?.nickname || user?.username || t("chat.you");
 
   return (
     <div
@@ -86,9 +88,9 @@ export default function ChatPanel({ onSend, onStop, onClear, width }: ChatPanelP
             animation: status === "running" ? "pulse 1.5s infinite" : "none",
           }}
         />
-        推論チャット
+        {t("chat.title")}
         {status === "running" && (
-          <span style={{ marginLeft: "auto", fontSize: 9.5, opacity: 0.6 }}>処理中…</span>
+          <span style={{ marginLeft: "auto", fontSize: 9.5, opacity: 0.6 }}>{t("chat.processing")}</span>
         )}
       </div>
 
@@ -108,7 +110,7 @@ export default function ChatPanel({ onSend, onStop, onClear, width }: ChatPanelP
           <MessageBubble
             type="ai"
             nickname="ATHENA"
-            content='因果的な問いを入力してください。<br /><span style="color:var(--text-1);font-size:12.5px">例：「なぜ日本のスタートアップ資金調達額がアメリカより少ないのか？」</span>'
+            content={t("chat.welcome")}
           />
         )}
         {messages.map((msg) => (
@@ -144,7 +146,7 @@ export default function ChatPanel({ onSend, onStop, onClear, width }: ChatPanelP
               }}
             >
               <span style={{ fontSize: 8 }}>■</span>
-              停止
+              {t("chat.stop")}
             </button>
           )}
           {messages.length > 0 && status !== "running" && (
@@ -168,7 +170,7 @@ export default function ChatPanel({ onSend, onStop, onClear, width }: ChatPanelP
                 gap: 5,
               }}
             >
-              クリア
+              {t("chat.clear")}
             </button>
           )}
         </div>
@@ -190,7 +192,7 @@ export default function ChatPanel({ onSend, onStop, onClear, width }: ChatPanelP
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="因果的な問いを入力…"
+            placeholder={t("chat.placeholder")}
             rows={1}
             style={{
               flex: 1,
@@ -233,7 +235,7 @@ export default function ChatPanel({ onSend, onStop, onClear, width }: ChatPanelP
             fontFamily: "var(--mono)",
           }}
         >
-          Enter で送信
+          {t("chat.sendHint")}
         </div>
       </div>
     </div>
@@ -316,11 +318,12 @@ function MessageItem({ msg, nickname }: { msg: ChatMessage; nickname: string }) 
 }
 
 function ParsedQuestionCard({ parsed }: { parsed: ParsedQuestionData }) {
+  const t = useLocale((s) => s.t);
   const fields = [
-    { label: "主語", value: parsed.subject },
-    { label: "述語", value: parsed.predicate },
-    { label: "スコープ", value: parsed.scope },
-    { label: "時間軸", value: parsed.time_frame },
+    { label: t("chat.subject"), value: parsed.subject },
+    { label: t("chat.predicate"), value: parsed.predicate },
+    { label: t("chat.scope"), value: parsed.scope },
+    { label: t("chat.timeFrame"), value: parsed.time_frame },
   ].filter((f) => f.value);
   const entities = parsed.entities?.filter(Boolean) || [];
 
@@ -379,6 +382,7 @@ function ParsedQuestionCard({ parsed }: { parsed: ParsedQuestionData }) {
 }
 
 function EvidenceSummaryCard({ summary }: { summary: EvidenceSummaryData }) {
+  const t = useLocale((s) => s.t);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 5, animation: "fadeUp 0.25s ease" }}>
       <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)" }}>ATHENA</div>
@@ -394,17 +398,17 @@ function EvidenceSummaryCard({ summary }: { summary: EvidenceSummaryData }) {
         }}
       >
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)" }}>
-          証拠収集完了
+          {t("chat.evidenceComplete")}
         </div>
         <div style={{ display: "flex", gap: 10, marginLeft: "auto" }}>
           <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--text-1)" }}>
-            計 <strong style={{ color: "var(--text-0)" }}>{summary.total}</strong>件
+            {t("chat.total")} <strong style={{ color: "var(--text-0)" }}>{summary.total}</strong>{t("chat.items")}
           </span>
           <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "#2dbe8a" }}>
-            支持 {summary.support}
+            {t("chat.support")} {summary.support}
           </span>
           <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "#d45757" }}>
-            反証 {summary.counter}
+            {t("chat.counter")} {summary.counter}
           </span>
         </div>
       </div>
@@ -616,6 +620,7 @@ function AnswerText({
 }
 
 function AnswerCard({ content, references }: { content: string; references?: ReferenceData[] }) {
+  const t = useLocale((s) => s.t);
   const [copied, setCopied] = useState(false);
 
   // Strip trailing reference section that Claude may append despite instructions.
@@ -629,7 +634,7 @@ function AnswerCard({ content, references }: { content: string; references?: Ref
     // Build copyable text with references
     let text = mainText;
     if (references && references.length > 0) {
-      text += "\n\n---\n参照元:\n";
+      text += `\n\n---\n${t("chat.references")}\n`;
       references.forEach((ref, i) => {
         text += `[${i + 1}] ${ref.title}${ref.url ? ` - ${ref.url}` : ""}\n`;
       });
@@ -670,7 +675,7 @@ function AnswerCard({ content, references }: { content: string; references?: Ref
             gap: 4,
           }}
         >
-          {copied ? "✓ コピー済" : "📋 コピー"}
+          {copied ? t("chat.copied") : t("chat.copy")}
         </button>
       </div>
       <div
@@ -751,6 +756,7 @@ function AnswerCard({ content, references }: { content: string; references?: Ref
 }
 
 function SearchActivityFeed({ activities }: { activities: SearchActivityItem[] }) {
+  const t = useLocale((s) => s.t);
   return (
     <div
       style={{
@@ -761,7 +767,7 @@ function SearchActivityFeed({ activities }: { activities: SearchActivityItem[] }
       }}
     >
       <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)" }}>
-        ATHENA — Web検索
+        {t("chat.webSearch")}
       </div>
       <div
         style={{
@@ -785,12 +791,13 @@ function SearchActivityFeed({ activities }: { activities: SearchActivityItem[] }
 }
 
 function SearchActivityLine({ item }: { item: SearchActivityItem }) {
+  const t = useLocale((s) => s.t);
   if (item.type === "searching") {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 6, animation: "fadeUp 0.2s ease" }}>
         <span style={{ fontSize: 10, opacity: 0.7, animation: "pulse 1.5s infinite" }}>🔍</span>
         <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-1)" }}>
-          検索中: <span style={{ color: "var(--text-0)" }}>{item.query}</span>
+          {t("chat.searching")} <span style={{ color: "var(--text-0)" }}>{item.query}</span>
         </span>
       </div>
     );
@@ -800,7 +807,7 @@ function SearchActivityLine({ item }: { item: SearchActivityItem }) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 2, animation: "fadeUp 0.2s ease" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--text-2)", marginBottom: 1 }}>
-          {item.results.length}件の結果を取得
+          {item.results.length}{t("chat.resultsFound")}
         </div>
         {item.results.map((r, i) => (
           <div
@@ -851,8 +858,8 @@ function SearchActivityLine({ item }: { item: SearchActivityItem }) {
       <div style={{ display: "flex", alignItems: "center", gap: 6, animation: "fadeUp 0.2s ease" }}>
         <span style={{ fontSize: 10, opacity: 0.7, animation: "pulse 1.5s infinite" }}>⚗</span>
         <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-1)" }}>
-          仮説{(item.hypothesisIndex ?? 0) + 1}の証拠を分析中
-          <span style={{ color: "var(--text-2)" }}> ({item.sourceCount}件)</span>
+          {t("chat.analyzingEvidence", { n: String((item.hypothesisIndex ?? 0) + 1) })}
+          <span style={{ color: "var(--text-2)" }}> ({item.sourceCount})</span>
         </span>
       </div>
     );
@@ -863,9 +870,9 @@ function SearchActivityLine({ item }: { item: SearchActivityItem }) {
       <div style={{ display: "flex", alignItems: "center", gap: 6, animation: "fadeUp 0.2s ease" }}>
         <span style={{ fontSize: 10 }}>✓</span>
         <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-1)" }}>
-          仮説{(item.hypothesisIndex ?? 0) + 1}:
-          <span style={{ color: "#2dbe8a", marginLeft: 4 }}>支持 {item.supportCount ?? 0}</span>
-          <span style={{ color: "#d45757", marginLeft: 6 }}>反証 {item.counterCount ?? 0}</span>
+          {t("chat.hypothesis", { n: String((item.hypothesisIndex ?? 0) + 1) })}
+          <span style={{ color: "#2dbe8a", marginLeft: 4 }}>{t("chat.support")} {item.supportCount ?? 0}</span>
+          <span style={{ color: "#d45757", marginLeft: 6 }}>{t("chat.counter")} {item.counterCount ?? 0}</span>
         </span>
       </div>
     );

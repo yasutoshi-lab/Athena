@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import TopBar from "@/components/TopBar";
+import { useLocale } from "@/hooks/useLocale";
+import type { Locale } from "@/lib/i18n";
 
 type Tab = "general" | "usage" | "appearance";
 
@@ -23,6 +25,7 @@ interface UsageData {
 export default function SettingsPage() {
   const router = useRouter();
   const { user, loading, loadUser, logout } = useAuth();
+  const { t, locale, setLocale } = useLocale();
   const [tab, setTab] = useState<Tab>("general");
   const [settings, setSettings] = useState<Record<string, unknown>>({});
   const [usage, setUsage] = useState<UsageData | null>(null);
@@ -38,10 +41,13 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (user) {
-      api.getSettings().then(setSettings).catch(console.error);
+      api.getSettings().then((s) => {
+        setSettings(s);
+        if (s.language) setLocale(s.language as Locale);
+      }).catch(console.error);
       api.getUsage().then(setUsage).catch(console.error);
     }
-  }, [user]);
+  }, [user, setLocale]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -62,9 +68,9 @@ export default function SettingsPage() {
   if (loading || !user) return null;
 
   const navItems = [
-    { key: "general" as Tab, icon: "⊞", label: "一般" },
-    { key: "usage" as Tab, icon: "◷", label: "API 使用量" },
-    { key: "appearance" as Tab, icon: "◑", label: "外観" },
+    { key: "general" as Tab, icon: "⊞", label: t("settings.general") },
+    { key: "usage" as Tab, icon: "◷", label: t("settings.usage") },
+    { key: "appearance" as Tab, icon: "◑", label: t("settings.appearance") },
   ];
 
   return (
@@ -94,7 +100,7 @@ export default function SettingsPage() {
               padding: "6px 8px 4px",
             }}
           >
-            設定
+            {t("settings.title")}
           </div>
           {navItems.map((item) => (
             <button
@@ -137,7 +143,7 @@ export default function SettingsPage() {
             }}
           >
             <span style={{ fontSize: 15, opacity: 0.7 }}>→</span>
-            ログアウト
+            {t("settings.logout")}
           </button>
         </div>
 
@@ -234,25 +240,31 @@ function GeneralTab({
   onSave: () => void;
   saving: boolean;
 }) {
+  const { t, setLocale } = useLocale();
   const update = (key: string, value: unknown) => setSettings({ ...settings, [key]: value });
+
+  const handleLanguageChange = (lang: string) => {
+    update("language", lang);
+    setLocale(lang as Locale);
+  };
 
   return (
     <div style={{ animation: "fadeUp 0.2s ease" }}>
-      <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>一般</div>
+      <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{t("settings.generalTitle")}</div>
       <div style={{ fontSize: 13, color: "var(--text-1)", marginBottom: 28 }}>
-        プロフィールとモデルの設定
+        {t("settings.generalDesc")}
       </div>
 
-      <SectionTitle>プロフィール</SectionTitle>
+      <SectionTitle>{t("settings.profile")}</SectionTitle>
       <SettingsCard>
-        <SettingsRow label="氏名" desc="システム内での表示名">
+        <SettingsRow label={t("settings.displayName")} desc={t("settings.displayNameDesc")}>
           <input
             style={inputStyle}
             value={(settings.display_name as string) || ""}
             onChange={(e) => update("display_name", e.target.value)}
           />
         </SettingsRow>
-        <SettingsRow label="呼び名" desc="Athena があなたを呼ぶ名前">
+        <SettingsRow label={t("settings.nickname")} desc={t("settings.nicknameDesc")}>
           <input
             style={inputStyle}
             value={(settings.nickname as string) || ""}
@@ -261,20 +273,34 @@ function GeneralTab({
         </SettingsRow>
       </SettingsCard>
 
-      <SectionTitle>LLM モデル</SectionTitle>
+      <SectionTitle>{t("settings.language")}</SectionTitle>
       <SettingsCard>
-        <SettingsRow label="デフォルトモデル" desc="クエリ複雑度判定の優先モデル">
+        <SettingsRow label={t("settings.languageLabel")} desc={t("settings.languageDesc")}>
+          <select
+            style={selectStyle}
+            value={(settings.language as string) || "ja"}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+          >
+            <option value="ja">{t("settings.langJa")}</option>
+            <option value="en">{t("settings.langEn")}</option>
+          </select>
+        </SettingsRow>
+      </SettingsCard>
+
+      <SectionTitle>{t("settings.llmModel")}</SectionTitle>
+      <SettingsCard>
+        <SettingsRow label={t("settings.defaultModel")} desc={t("settings.defaultModelDesc")}>
           <select
             style={selectStyle}
             value={(settings.default_model as string) || "auto"}
             onChange={(e) => update("default_model", e.target.value)}
           >
-            <option value="auto">自動判定（推奨）</option>
-            <option value="sonnet">Claude Sonnet（常に）</option>
-            <option value="opus">Claude Opus（常に）</option>
+            <option value="auto">{t("settings.modelAuto")}</option>
+            <option value="sonnet">{t("settings.modelSonnet")}</option>
+            <option value="opus">{t("settings.modelOpus")}</option>
           </select>
         </SettingsRow>
-        <SettingsRow label="複雑度しきい値" desc="Opus に切り替えるエンティティ数">
+        <SettingsRow label={t("settings.threshold")} desc={t("settings.thresholdDesc")}>
           <input
             style={{ ...inputStyle, width: 80 }}
             type="number"
@@ -286,11 +312,11 @@ function GeneralTab({
         </SettingsRow>
       </SettingsCard>
 
-      <SectionTitle>システムプロンプト</SectionTitle>
+      <SectionTitle>{t("settings.systemPrompt")}</SectionTitle>
       <SettingsCard>
         <div style={{ padding: "14px 18px", display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ fontSize: 12, color: "var(--text-1)" }}>
-            全セッション共通のシステムプロンプト。空欄の場合はデフォルトが適用されます。
+            {t("settings.systemPromptDesc")}
           </div>
           <textarea
             style={{
@@ -309,7 +335,7 @@ function GeneralTab({
             }}
             value={(settings.system_prompt as string) || ""}
             onChange={(e) => update("system_prompt", e.target.value)}
-            placeholder="例：日本語で回答してください。引用は必ず出典URLを明記してください。"
+            placeholder={t("settings.systemPromptPlaceholder")}
           />
         </div>
       </SettingsCard>
@@ -329,14 +355,15 @@ function GeneralTab({
           opacity: saving ? 0.7 : 1,
         }}
       >
-        {saving ? "保存中..." : "変更を保存"}
+        {saving ? t("common.saving") : t("common.saveChanges")}
       </button>
     </div>
   );
 }
 
 function UsageTab({ usage }: { usage: UsageData | null }) {
-  if (!usage) return <div style={{ color: "var(--text-2)" }}>読み込み中...</div>;
+  const t = useLocale((s) => s.t);
+  if (!usage) return <div style={{ color: "var(--text-2)" }}>{t("common.loading")}</div>;
 
   const sonnetCost = usage.model_breakdown.sonnet?.cost || 0;
   const opusCost = usage.model_breakdown.opus?.cost || 0;
@@ -344,21 +371,21 @@ function UsageTab({ usage }: { usage: UsageData | null }) {
 
   return (
     <div style={{ animation: "fadeUp 0.2s ease" }}>
-      <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>API 使用量</div>
+      <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{t("settings.usageTitle")}</div>
       <div style={{ fontSize: 13, color: "var(--text-1)", marginBottom: 28 }}>
-        今月のトークン消費とコスト（USD）
+        {t("settings.usageDesc")}
       </div>
 
       {/* Stats grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 18 }}>
-        <StatCard label="総コスト（今月）" value={`$${usage.total_cost.toFixed(2)}`} />
+        <StatCard label={t("settings.totalCost")} value={`$${usage.total_cost.toFixed(2)}`} />
         <StatCard
-          label="総トークン"
+          label={t("settings.totalTokens")}
           value={`${((usage.total_tokens.input + usage.total_tokens.output) / 1000).toFixed(1)}K`}
           sub={`input ${(usage.total_tokens.input / 1000).toFixed(0)}K / output ${(usage.total_tokens.output / 1000).toFixed(0)}K`}
         />
         <StatCard
-          label="セッション数"
+          label={t("settings.sessionCount")}
           value={String(usage.session_count)}
           sub={`Sonnet ${usage.model_breakdown.sonnet?.sessions || 0} / Opus ${usage.model_breakdown.opus?.sessions || 0}`}
         />
@@ -391,10 +418,10 @@ function UsageTab({ usage }: { usage: UsageData | null }) {
               letterSpacing: "0.05em",
             }}
           >
-            <span>セッション</span>
-            <span>モデル</span>
-            <span>トークン</span>
-            <span>コスト</span>
+            <span>{t("settings.session")}</span>
+            <span>{t("settings.model")}</span>
+            <span>{t("settings.tokens")}</span>
+            <span>{t("settings.cost")}</span>
           </div>
           {usage.sessions.map((s, i) => (
             <div
@@ -492,6 +519,7 @@ function AppearanceTab({
   onSave: () => void;
   saving: boolean;
 }) {
+  const t = useLocale((s) => s.t);
   const update = (key: string, value: unknown) => setSettings({ ...settings, [key]: value });
   const colorMode = (settings.color_mode as string) || "dark";
 
@@ -506,18 +534,18 @@ function AppearanceTab({
 
   return (
     <div style={{ animation: "fadeUp 0.2s ease" }}>
-      <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>外観</div>
+      <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{t("settings.appearanceTitle")}</div>
       <div style={{ fontSize: 13, color: "var(--text-1)", marginBottom: 28 }}>
-        表示モードとグラフの表示設定
+        {t("settings.appearanceDesc")}
       </div>
 
-      <SectionTitle>カラーモード</SectionTitle>
+      <SectionTitle>{t("settings.colorMode")}</SectionTitle>
       <SettingsCard>
         <div style={{ display: "flex", gap: 10, padding: "14px 18px" }}>
           {[
-            { key: "dark", label: "ダーク" },
-            { key: "light", label: "ライト" },
-            { key: "system", label: "システム" },
+            { key: "dark", label: t("settings.dark") },
+            { key: "light", label: t("settings.light") },
+            { key: "system", label: t("settings.system") },
           ].map((m) => (
             <button
               key={m.key}
@@ -563,29 +591,29 @@ function AppearanceTab({
         </div>
       </SettingsCard>
 
-      <SectionTitle>グラフ設定</SectionTitle>
+      <SectionTitle>{t("settings.graphSettings")}</SectionTitle>
       <SettingsCard>
-        <SettingsRow label="ノードアニメーション" desc="推論進行時にノードをフェードイン">
+        <SettingsRow label={t("settings.nodeAnimation")} desc={t("settings.nodeAnimationDesc")}>
           <Toggle
             checked={(settings.graph_animation as boolean) ?? true}
             onChange={(v) => update("graph_animation", v)}
           />
         </SettingsRow>
-        <SettingsRow label="グリッド表示" desc="グラフ背景のグリッドを表示">
+        <SettingsRow label={t("settings.gridDisplay")} desc={t("settings.gridDisplayDesc")}>
           <Toggle
             checked={(settings.graph_grid as boolean) ?? true}
             onChange={(v) => update("graph_grid", v)}
           />
         </SettingsRow>
-        <SettingsRow label="アニメーション速度" desc="グラフのノード展開速度">
+        <SettingsRow label={t("settings.animSpeed")} desc={t("settings.animSpeedDesc")}>
           <select
             style={{ ...selectStyle, width: 130 }}
             value={(settings.animation_speed as string) || "normal"}
             onChange={(e) => update("animation_speed", e.target.value)}
           >
-            <option value="slow">低速</option>
-            <option value="normal">標準</option>
-            <option value="fast">高速</option>
+            <option value="slow">{t("settings.speedSlow")}</option>
+            <option value="normal">{t("settings.speedNormal")}</option>
+            <option value="fast">{t("settings.speedFast")}</option>
           </select>
         </SettingsRow>
       </SettingsCard>
@@ -605,7 +633,7 @@ function AppearanceTab({
           opacity: saving ? 0.7 : 1,
         }}
       >
-        {saving ? "保存中..." : "変更を保存"}
+        {saving ? t("common.saving") : t("common.saveChanges")}
       </button>
     </div>
   );

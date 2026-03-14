@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useSession } from "./useSession";
 import { useToast } from "./useToast";
+import { useLocale } from "./useLocale";
 
 export function useWebSocket(sessionId: number | null) {
   const wsRef = useRef<WebSocket | null>(null);
@@ -20,6 +21,7 @@ export function useWebSocket(sessionId: number | null) {
     updateSessionTitle,
   } = useSession();
   const addToast = useToast((s) => s.addToast);
+  const t = useLocale((s) => s.t);
 
   const connect = useCallback(() => {
     if (!sessionId) return;
@@ -48,10 +50,10 @@ export function useWebSocket(sessionId: number | null) {
     };
 
     ws.onerror = () => {
-      setError("WebSocket接続エラー");
+      setError(t("ws.connectionError"));
       wsRef.current = null;
     };
-  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, clearGraphData, updateSessionTitle, addToast]);
+  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, clearGraphData, updateSessionTitle, addToast, t]);
 
   const handleEvent = useCallback(
     (data: Record<string, unknown>) => {
@@ -66,7 +68,7 @@ export function useWebSocket(sessionId: number | null) {
           setThinking({
             node: "follow_up",
             icon: "💬",
-            label: "追加質問に回答中",
+            label: t("ws.followUpThinking"),
           });
           break;
 
@@ -110,7 +112,7 @@ export function useWebSocket(sessionId: number | null) {
           addMessage({
             id: "model-selected",
             type: "ai",
-            content: `モデル決定：${modelName}\n複雑度スコア: ${score?.toFixed(2) ?? "N/A"} | エンティティ数: ${entityCount ?? "N/A"}${reasoning ? `\n${reasoning}` : ""}`,
+            content: `${t("ws.modelSelected", { model: modelName, score: score?.toFixed(2) ?? "N/A", count: String(entityCount ?? "N/A") })}${reasoning ? `\n${reasoning}` : ""}`,
             variant: "step",
             stepIcon: "◎",
             stepTag: "auto",
@@ -136,7 +138,7 @@ export function useWebSocket(sessionId: number | null) {
           addMessage({
             id: "hypotheses",
             type: "ai",
-            content: "因果仮説を生成",
+            content: t("chat.hypothesesGenerated"),
             variant: "hypothesis",
             hypotheses: data.hypotheses as HypothesisData[],
           });
@@ -266,7 +268,7 @@ export function useWebSocket(sessionId: number | null) {
           break;
       }
     },
-    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, clearGraphData, updateSessionTitle, addToast],
+    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, clearGraphData, updateSessionTitle, addToast, t],
   );
 
   const sendMessage = useCallback(

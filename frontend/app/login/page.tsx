@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocale } from "@/hooks/useLocale";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const login = useAuth((s) => s.login);
+  const t = useLocale((s) => s.t);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +21,7 @@ export default function LoginPage() {
       await login(username, password);
       router.push("/");
     } catch {
-      setError("ログインに失敗しました");
+      setError(t("login.failed"));
     } finally {
       setLoading(false);
     }
@@ -74,9 +76,9 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <div style={{ fontSize: 22, fontWeight: 600, lineHeight: 1.3 }}>ログイン</div>
+          <div style={{ fontSize: 22, fontWeight: 600, lineHeight: 1.3 }}>{t("login.title")}</div>
           <div style={{ color: "var(--text-1)", fontSize: 13, marginTop: 2 }}>
-            因果推論システムにアクセスします
+            {t("login.subtitle")}
           </div>
         </div>
 
@@ -90,7 +92,7 @@ export default function LoginPage() {
                 letterSpacing: "0.03em",
               }}
             >
-              ユーザー名
+              {t("login.username")}
             </label>
             <input
               type="text"
@@ -117,7 +119,7 @@ export default function LoginPage() {
                 letterSpacing: "0.03em",
               }}
             >
-              パスワード
+              {t("login.password")}
             </label>
             <input
               type="password"
@@ -158,7 +160,7 @@ export default function LoginPage() {
             opacity: loading ? 0.7 : 1,
           }}
         >
-          {loading ? "ログイン中..." : "ログイン"}
+          {loading ? t("login.submitting") : t("login.submit")}
         </button>
 
         <div
@@ -168,7 +170,7 @@ export default function LoginPage() {
             color: "var(--text-2)",
           }}
         >
-          ローカル環境専用システム — Athena v0.1
+          {t("login.footer")}
         </div>
       </form>
     </div>

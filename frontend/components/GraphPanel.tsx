@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as d3 from "d3";
 import { useSession, type GraphNodeData, type GraphEdgeData } from "@/hooks/useSession";
+import { useLocale } from "@/hooks/useLocale";
 
 const COLORS: Record<string, string> = {
   question: "#7c5ce5",
@@ -34,6 +35,7 @@ interface SimLink extends d3.SimulationLinkDatum<SimNode> {
 export default function GraphPanel() {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const t = useLocale((s) => s.t);
   const graphNodes = useSession((s) => s.graphNodes);
   const graphEdges = useSession((s) => s.graphEdges);
   const progress = useSession((s) => s.progress);
@@ -48,6 +50,8 @@ export default function GraphPanel() {
       return next;
     });
   };
+
+  const emptyText = t("graph.empty");
 
   // Build D3 graph
   useEffect(() => {
@@ -108,7 +112,7 @@ export default function GraphPanel() {
         .attr("fill", "var(--text-2)")
         .attr("font-size", "13px")
         .attr("font-family", "var(--mono)")
-        .text("推論を開始すると知識グラフが表示されます");
+        .text(emptyText);
       return;
     }
 
@@ -286,7 +290,7 @@ export default function GraphPanel() {
     return () => {
       sim.stop();
     };
-  }, [graphNodes, graphEdges, hiddenTypes]);
+  }, [graphNodes, graphEdges, hiddenTypes, emptyText]);
 
   const filterButtons = [
     { key: "question", label: "Question", cls: "q" },
@@ -333,7 +337,7 @@ export default function GraphPanel() {
             textTransform: "uppercase",
           }}
         >
-          知識グラフ
+          {t("graph.title")}
         </div>
         <div style={{ display: "flex", gap: 5, marginLeft: "auto" }}>
           {filterButtons.map((f) => (

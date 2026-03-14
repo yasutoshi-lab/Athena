@@ -12,6 +12,7 @@ interface User {
     default_model: string;
     complexity_threshold: number;
     system_prompt: string;
+    language: string;
     color_mode: string;
     graph_animation: boolean;
     graph_grid: boolean;

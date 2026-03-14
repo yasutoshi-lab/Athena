@@ -9,6 +9,8 @@ import TopBar from "@/components/TopBar";
 import ChatPanel from "@/components/ChatPanel";
 import GraphPanel from "@/components/GraphPanel";
 import SessionSidebar from "@/components/SessionSidebar";
+import { useLocale } from "@/hooks/useLocale";
+import type { Locale } from "@/lib/i18n";
 
 export default function MainPage() {
   const router = useRouter();
@@ -22,6 +24,7 @@ export default function MainPage() {
     reset,
   } = useSession();
   const { connect, sendMessage, sendFollowUp, stopInference, disconnect, isConnected } = useWebSocket(sessionId);
+  const { t, setLocale } = useLocale();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -32,7 +35,10 @@ export default function MainPage() {
     if (!loading && !user) {
       router.push("/login");
     }
-  }, [loading, user, router]);
+    if (user?.settings?.language) {
+      setLocale(user.settings.language as Locale);
+    }
+  }, [loading, user, router, setLocale]);
 
   useEffect(() => {
     if (sessionId) {
@@ -82,7 +88,7 @@ export default function MainPage() {
       addMessage({
         id: `error-${Date.now()}`,
         type: "ai",
-        content: "セッションの作成に失敗しました。",
+        content: t("error.sessionCreate"),
         variant: "bubble",
       });
     }
@@ -120,7 +126,7 @@ export default function MainPage() {
         addMessage({
           id: `hypotheses-${id}`,
           type: "ai",
-          content: "因果仮説を生成",
+          content: t("chat.hypothesesGenerated"),
           variant: "hypothesis",
           hypotheses: session.hypotheses.map((h: { text: string; score: number; order: number }) => ({
             text: h.text,
@@ -151,7 +157,7 @@ export default function MainPage() {
       addMessage({
         id: `error-${Date.now()}`,
         type: "ai",
-        content: "セッションの読み込みに失敗しました。",
+        content: t("error.sessionLoad"),
         variant: "bubble",
       });
     }
@@ -217,7 +223,7 @@ export default function MainPage() {
           fontSize: 13,
         }}
       >
-        読み込み中...
+        {t("common.loading")}
       </div>
     );
   }

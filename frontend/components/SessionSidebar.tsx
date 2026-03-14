@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { api } from "@/lib/api";
+import { useLocale } from "@/hooks/useLocale";
 
 interface SessionItem {
   id: number;
@@ -18,15 +19,15 @@ interface SessionSidebarProps {
   onSessionDeleted?: (id: number) => void;
 }
 
-function groupByDate(sessions: SessionItem[]) {
+function groupByDate(sessions: SessionItem[], labels: { today: string; yesterday: string; older: string }) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today.getTime() - 86400000);
 
   const groups: { label: string; items: SessionItem[] }[] = [
-    { label: "今日", items: [] },
-    { label: "昨日", items: [] },
-    { label: "それ以前", items: [] },
+    { label: labels.today, items: [] },
+    { label: labels.yesterday, items: [] },
+    { label: labels.older, items: [] },
   ];
 
   for (const s of sessions) {
@@ -46,6 +47,7 @@ export default function SessionSidebar({
   onClose,
   onSessionDeleted,
 }: SessionSidebarProps) {
+  const t = useLocale((s) => s.t);
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
@@ -82,7 +84,7 @@ export default function SessionSidebar({
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpenId]);
 
-  const groups = groupByDate(sessions);
+  const groups = groupByDate(sessions, { today: t("sidebar.today"), yesterday: t("sidebar.yesterday"), older: t("sidebar.older") });
 
   const statusDot = (status: string) => {
     const colors: Record<string, string> = {
@@ -183,7 +185,7 @@ export default function SessionSidebar({
             transition: "all 0.15s",
           }}
         >
-          ＋ 新規セッション
+          {t("sidebar.newSession")}
         </button>
         <button
           onClick={onClose}
@@ -218,7 +220,7 @@ export default function SessionSidebar({
               color: "var(--text-2)",
             }}
           >
-            読込中...
+            {t("sidebar.loading")}
           </div>
         ) : sessions.length === 0 ? (
           <div
@@ -230,7 +232,7 @@ export default function SessionSidebar({
               color: "var(--text-2)",
             }}
           >
-            セッションなし
+            {t("sidebar.empty")}
           </div>
         ) : (
           groups.map((group) => (
@@ -307,6 +309,8 @@ function SessionRow({
   onSaveEdit: () => void;
   onCancelEdit: () => void;
 }) {
+  const t = useLocale((s) => s.t);
+
   if (isEditing) {
     return (
       <div
@@ -352,7 +356,7 @@ function SessionRow({
               border: "none",
             }}
           >
-            保存
+            {t("common.save")}
           </button>
           <button
             onClick={onCancelEdit}
@@ -368,7 +372,7 @@ function SessionRow({
               border: "1px solid var(--border)",
             }}
           >
-            キャンセル
+            {t("common.cancel")}
           </button>
         </div>
       </div>
@@ -500,7 +504,7 @@ function SessionRow({
               ((e.target as HTMLElement).style.background = "transparent")
             }
           >
-            編集
+            {t("common.edit")}
           </button>
           <button
             onClick={(e) => {
@@ -529,7 +533,7 @@ function SessionRow({
               ((e.target as HTMLElement).style.background = "transparent")
             }
           >
-            削除
+            {t("common.delete")}
           </button>
         </div>
       )}

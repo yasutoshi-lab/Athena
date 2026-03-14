@@ -17,6 +17,11 @@ class UserSettings(models.Model):
     )
     complexity_threshold = models.IntegerField(default=3)
     system_prompt = models.TextField(blank=True)
+    language = models.CharField(
+        max_length=5,
+        choices=[("ja", "日本語"), ("en", "English")],
+        default="ja",
+    )
     color_mode = models.CharField(
         max_length=10,
         choices=[("dark", "ダーク"), ("light", "ライト"), ("system", "システム")],
