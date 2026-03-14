@@ -260,7 +260,8 @@ export function useWebSocket(sessionId: number | null) {
         case "error":
           setThinking(null);
           setError(data.message as string);
-          setStatus("error");
+          setStatus("idle");
+          setProgress(0);
           addToast({ type: "error", message: data.message as string });
           break;
       }
