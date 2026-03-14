@@ -24,6 +24,8 @@ class Session(models.Model):
         choices=Status.choices,
         default=Status.PENDING,
     )
+    final_answer = models.TextField(blank=True)
+    references = models.JSONField(default=list)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

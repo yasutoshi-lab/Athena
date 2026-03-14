@@ -15,6 +15,7 @@ export function useWebSocket(sessionId: number | null) {
     setThinking,
     addSearchActivity,
     clearSearchActivities,
+    updateSessionTitle,
   } = useSession();
 
   const connect = useCallback(() => {
@@ -42,7 +43,7 @@ export function useWebSocket(sessionId: number | null) {
       setError("WebSocket接続エラー");
       wsRef.current = null;
     };
-  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities]);
+  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, updateSessionTitle]);
 
   const handleEvent = useCallback(
     (data: Record<string, unknown>) => {
@@ -221,6 +222,13 @@ export function useWebSocket(sessionId: number | null) {
           });
           break;
 
+        case "title_generated":
+          updateSessionTitle(
+            data.session_id as number,
+            data.title as string,
+          );
+          break;
+
         case "error":
           setThinking(null);
           setError(data.message as string);
@@ -228,7 +236,7 @@ export function useWebSocket(sessionId: number | null) {
           break;
       }
     },
-    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities],
+    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, updateSessionTitle],
   );
 
   const sendMessage = useCallback(

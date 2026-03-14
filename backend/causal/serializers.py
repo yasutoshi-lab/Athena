@@ -58,6 +58,8 @@ class SessionDetailSerializer(serializers.ModelSerializer):
             "selected_model",
             "status",
             "hypotheses",
+            "final_answer",
+            "references",
             "created_at",
             "updated_at",
         )

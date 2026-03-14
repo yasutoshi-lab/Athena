@@ -408,6 +408,11 @@ async def run_pipeline(
 
     await send_event({"type": "session_completed", "session_id": session_id})
 
+    # Generate session title asynchronously
+    asyncio.ensure_future(
+        _generate_title(session_id, query, send_event)
+    )
+
 
 async def _save_results(session_id: int, state: dict):
     """Persist pipeline results to database."""
@@ -427,6 +432,8 @@ async def _save_results(session_id: int, state: dict):
             "claude-opus-4-20250514": "opus",
         }
         session.selected_model = model_short.get(full_model, full_model)
+        session.final_answer = state.get("final_answer", "")
+        session.references = state.get("references", [])
         session.save()
 
         # Save hypotheses
@@ -476,3 +483,34 @@ async def _save_results(session_id: int, state: dict):
                 )
 
     await save()
+
+
+async def _generate_title(session_id: int, query: str, send_event: Callable):
+    """Generate a concise session title using Claude and notify via WebSocket."""
+    from channels.db import database_sync_to_async
+    from ..agents.title_generator import generate_title
+
+    try:
+        title = await database_sync_to_async(generate_title)(query)
+        if not title:
+            return
+
+        @database_sync_to_async
+        def update_title():
+            from ..models import Session
+            Session.objects.filter(id=session_id).update(title=title)
+
+        await update_title()
+
+        try:
+            await send_event({
+                "type": "title_generated",
+                "session_id": session_id,
+                "title": title,
+            })
+        except Exception:
+            # WS may already be closed — title is saved in DB regardless
+            pass
+
+    except Exception as e:
+        logger.warning(f"Title generation failed for session {session_id}: {e}")

@@ -75,6 +75,15 @@ export interface ThinkingState {
   label: string;
 }
 
+export interface SessionListItem {
+  id: number;
+  title: string;
+  query: string;
+  status: string;
+  selected_model: string;
+  created_at: string;
+}
+
 interface SessionState {
   sessionId: number | null;
   status: "idle" | "running" | "completed" | "error";
@@ -86,6 +95,7 @@ interface SessionState {
   error: string | null;
   thinking: ThinkingState | null;
   searchActivities: SearchActivityItem[];
+  sessionList: SessionListItem[];
 
   setSessionId: (id: number) => void;
   addMessage: (msg: ChatMessage) => void;
@@ -98,6 +108,8 @@ interface SessionState {
   setThinking: (t: ThinkingState | null) => void;
   addSearchActivity: (item: SearchActivityItem) => void;
   clearSearchActivities: () => void;
+  setSessionList: (list: SessionListItem[]) => void;
+  updateSessionTitle: (id: number, title: string) => void;
   reset: () => void;
 }
 
@@ -114,6 +126,7 @@ export const useSession = create<SessionState>((set) => ({
   error: null,
   thinking: null,
   searchActivities: [],
+  sessionList: [],
 
   setSessionId: (id) => set({ sessionId: id }),
   addMessage: (msg) =>
@@ -149,6 +162,13 @@ export const useSession = create<SessionState>((set) => ({
   addSearchActivity: (item) =>
     set((s) => ({ searchActivities: [...s.searchActivities, item] })),
   clearSearchActivities: () => set({ searchActivities: [] }),
+  setSessionList: (list) => set({ sessionList: list }),
+  updateSessionTitle: (id, title) =>
+    set((s) => ({
+      sessionList: s.sessionList.map((item) =>
+        item.id === id ? { ...item, title } : item
+      ),
+    })),
   reset: () =>
     set({
       sessionId: null,

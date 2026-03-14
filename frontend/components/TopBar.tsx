@@ -3,7 +3,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSession } from "@/hooks/useSession";
 import { useRouter, usePathname } from "next/navigation";
 
-export default function TopBar() {
+interface TopBarProps {
+  onSidebarToggle?: () => void;
+  isSidebarOpen?: boolean;
+}
+
+export default function TopBar({ onSidebarToggle, isSidebarOpen }: TopBarProps) {
   const user = useAuth((s) => s.user);
   const status = useSession((s) => s.status);
   const selectedModel = useSession((s) => s.selectedModel);
@@ -79,6 +84,22 @@ export default function TopBar() {
 
       {/* Nav */}
       <div style={{ display: "flex", gap: 2 }}>
+        {pathname === "/" && onSidebarToggle && (
+          <button
+            onClick={onSidebarToggle}
+            style={{
+              padding: "4px 12px",
+              borderRadius: 6,
+              fontSize: 13,
+              color: isSidebarOpen ? "var(--text-0)" : "var(--text-1)",
+              background: isSidebarOpen ? "var(--bg-2)" : "transparent",
+              fontWeight: 500,
+              transition: "all 0.15s",
+            }}
+          >
+            セッション一覧
+          </button>
+        )}
         <button
           onClick={() => router.push("/")}
           style={{
@@ -86,12 +107,12 @@ export default function TopBar() {
             borderRadius: 6,
             fontSize: 13,
             color: pathname === "/" ? "var(--text-0)" : "var(--text-1)",
-            background: pathname === "/" ? "var(--bg-2)" : "transparent",
+            background: pathname === "/" && !isSidebarOpen ? "var(--bg-2)" : pathname === "/" ? "transparent" : "transparent",
             fontWeight: 500,
             transition: "all 0.15s",
           }}
         >
-          チャット
+          推論チャット
         </button>
         <button
           onClick={() => router.push("/settings")}

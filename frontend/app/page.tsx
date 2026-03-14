@@ -8,12 +8,21 @@ import { api } from "@/lib/api";
 import TopBar from "@/components/TopBar";
 import ChatPanel from "@/components/ChatPanel";
 import GraphPanel from "@/components/GraphPanel";
+import SessionSidebar from "@/components/SessionSidebar";
 
 export default function MainPage() {
   const router = useRouter();
   const { user, loading, loadUser } = useAuth();
-  const { sessionId, setSessionId, addMessage, reset } = useSession();
+  const {
+    sessionId,
+    setSessionId,
+    addMessage,
+    addGraphData,
+    setStatus,
+    reset,
+  } = useSession();
   const { connect, sendMessage, stopInference, disconnect } = useWebSocket(sessionId);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
     loadUser();
@@ -76,6 +85,71 @@ export default function MainPage() {
     reset();
   };
 
+  const handleSelectSession = async (id: number) => {
+    disconnect();
+    reset();
+
+    try {
+      const [session, graph] = await Promise.all([
+        api.getSession(id),
+        api.getGraph(id),
+      ]);
+
+      // Rebuild chat history from session data
+      addMessage({
+        id: `user-${id}`,
+        type: "user",
+        content: session.query,
+        variant: "bubble",
+      });
+
+      // Add hypotheses if available
+      if (session.hypotheses && session.hypotheses.length > 0) {
+        addMessage({
+          id: `hypotheses-${id}`,
+          type: "ai",
+          content: "因果仮説を生成",
+          variant: "hypothesis",
+          hypotheses: session.hypotheses.map((h: { text: string; score: number; order: number }) => ({
+            text: h.text,
+            score: h.score,
+          })),
+        });
+      }
+
+      // Add final answer if available
+      if (session.final_answer) {
+        addMessage({
+          id: `answer-${id}`,
+          type: "ai",
+          content: session.final_answer,
+          variant: "answer",
+          references: session.references || [],
+        });
+      }
+
+      // Restore graph
+      if (graph.nodes?.length || graph.edges?.length) {
+        addGraphData(graph.nodes || [], graph.edges || []);
+      }
+
+      setSessionId(id);
+      setStatus(session.status === "running" ? "running" : session.status === "completed" ? "completed" : "idle");
+    } catch (err) {
+      addMessage({
+        id: `error-${Date.now()}`,
+        type: "ai",
+        content: "セッションの読み込みに失敗しました。",
+        variant: "bubble",
+      });
+    }
+  };
+
+  const handleNewSession = () => {
+    disconnect();
+    reset();
+  };
+
   // --- Resizable divider (hooks must be before any early return) ---
   const MIN_CHAT_WIDTH = 300;
   const DEFAULT_CHAT_WIDTH = 380;
@@ -90,9 +164,9 @@ export default function MainPage() {
     const onMouseMove = (ev: MouseEvent) => {
       if (!dragging.current || !containerRef.current) return;
       const containerRect = containerRef.current.getBoundingClientRect();
-      const maxWidth = containerRect.width * 0.5; // 50% limit
+      const maxWidth = containerRect.width * 0.5;
       const newWidth = Math.min(
-        Math.max(ev.clientX - containerRect.left, MIN_CHAT_WIDTH),
+        Math.max(ev.clientX - containerRect.left - (isSidebarOpen ? 220 : 0), MIN_CHAT_WIDTH),
         maxWidth,
       );
       setChatWidth(newWidth);
@@ -110,7 +184,7 @@ export default function MainPage() {
     document.body.style.userSelect = "none";
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
-  }, []);
+  }, [isSidebarOpen]);
 
   if (loading) {
     return (
@@ -135,8 +209,19 @@ export default function MainPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <TopBar />
+      <TopBar
+        onSidebarToggle={() => setIsSidebarOpen((v) => !v)}
+        isSidebarOpen={isSidebarOpen}
+      />
       <div ref={containerRef} style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        {isSidebarOpen && (
+          <SessionSidebar
+            currentSessionId={sessionId}
+            onSelectSession={handleSelectSession}
+            onNewSession={handleNewSession}
+            onClose={() => setIsSidebarOpen(false)}
+          />
+        )}
         <ChatPanel onSend={handleSend} onStop={handleStop} onClear={handleClear} width={chatWidth} />
         {/* Drag handle */}
         <div
@@ -150,7 +235,6 @@ export default function MainPage() {
             zIndex: 50,
           }}
         >
-          {/* Visible line */}
           <div
             style={{
               position: "absolute",
@@ -162,7 +246,6 @@ export default function MainPage() {
               transition: "background 0.15s",
             }}
           />
-          {/* Hover/active indicator */}
           <div
             style={{
               position: "absolute",
