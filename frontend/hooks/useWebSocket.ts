@@ -60,6 +60,24 @@ export function useWebSocket(sessionId: number | null) {
           clearSearchActivities();
           break;
 
+        case "follow_up_started":
+          setThinking({
+            node: "follow_up",
+            icon: "💬",
+            label: "追加質問に回答中",
+          });
+          break;
+
+        case "follow_up_response":
+          setThinking(null);
+          addMessage({
+            id: `followup-${Date.now()}`,
+            type: "ai",
+            content: data.answer as string,
+            variant: "bubble",
+          });
+          break;
+
         case "node_started":
           setThinking({
             node: data.node as string,
@@ -258,6 +276,17 @@ export function useWebSocket(sessionId: number | null) {
     [],
   );
 
+  const sendFollowUp = useCallback(
+    (query: string) => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(
+          JSON.stringify({ type: "follow_up", query }),
+        );
+      }
+    },
+    [],
+  );
+
   const stopInference = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: "stop_inference" }));
@@ -278,7 +307,7 @@ export function useWebSocket(sessionId: number | null) {
     [],
   );
 
-  return { connect, sendMessage, stopInference, disconnect, isConnected };
+  return { connect, sendMessage, sendFollowUp, stopInference, disconnect, isConnected };
 }
 
 // Types

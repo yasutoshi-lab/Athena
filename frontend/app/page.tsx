@@ -21,7 +21,7 @@ export default function MainPage() {
     setStatus,
     reset,
   } = useSession();
-  const { connect, sendMessage, stopInference, disconnect, isConnected } = useWebSocket(sessionId);
+  const { connect, sendMessage, sendFollowUp, stopInference, disconnect, isConnected } = useWebSocket(sessionId);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -52,11 +52,11 @@ export default function MainPage() {
     // Follow-up query within existing session
     if (sessionId) {
       if (isConnected()) {
-        sendMessage(query);
+        sendFollowUp(query);
       } else {
         // WS closed — reconnect and send
         connect();
-        setTimeout(() => sendMessage(query), 500);
+        setTimeout(() => sendFollowUp(query), 500);
       }
       return;
     }

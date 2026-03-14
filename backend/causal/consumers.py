@@ -33,6 +33,13 @@ class InferenceConsumer(AsyncJsonWebsocketConsumer):
             self._cancel_pipeline()
             self._pipeline_task = asyncio.create_task(self._run_pipeline(query))
 
+        elif msg_type == "follow_up":
+            query = content.get("query", "")
+            if not query:
+                await self.send_json({"type": "error", "message": "クエリが空です"})
+                return
+            asyncio.create_task(self._run_follow_up(query))
+
         elif msg_type == "stop_inference":
             self._cancel_pipeline()
             await self._update_session_status("error")
@@ -62,6 +69,51 @@ class InferenceConsumer(AsyncJsonWebsocketConsumer):
             )
         finally:
             self._pipeline_task = None
+
+    async def _run_follow_up(self, query):
+        from .agents.follow_up import generate_follow_up_response
+
+        try:
+            await self.send_json({"type": "follow_up_started"})
+
+            context = await self._load_session_context()
+            answer = await database_sync_to_async(generate_follow_up_response)(
+                query=context["query"],
+                follow_up_query=query,
+                hypotheses=context["hypotheses"],
+                final_answer=context["final_answer"],
+                references=context["references"],
+            )
+
+            await self.send_json({
+                "type": "follow_up_response",
+                "answer": answer,
+            })
+        except Exception as e:
+            logger.exception("Follow-up error")
+            await self.send_json(
+                {"type": "error", "message": f"応答エラー: {str(e)}"}
+            )
+
+    @database_sync_to_async
+    def _load_session_context(self):
+        from .models import Session
+
+        session = Session.objects.prefetch_related(
+            "hypotheses__evidences"
+        ).get(id=self.session_id)
+
+        hypotheses = [
+            {"text": h.text, "score": h.score, "order": h.order}
+            for h in session.hypotheses.all()
+        ]
+
+        return {
+            "query": session.query,
+            "final_answer": session.final_answer,
+            "references": session.references or [],
+            "hypotheses": hypotheses,
+        }
 
     async def _send_event(self, event: dict):
         await self.send_json(event)
