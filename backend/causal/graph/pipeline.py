@@ -423,6 +423,11 @@ async def _save_results(session_id: int, state: dict):
         from ..models import Session, Hypothesis, Evidence, GraphNode, GraphEdge
 
         session = Session.objects.get(id=session_id)
+
+        # Clear previous pipeline data for re-run within the same session
+        session.hypotheses.all().delete()  # CASCADE deletes Evidence too
+        session.nodes.all().delete()       # CASCADE deletes GraphEdge too
+
         session.status = Session.Status.COMPLETED
         session.complexity_score = state.get("complexity_score")
         # Convert full model name to short name for DB storage

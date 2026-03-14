@@ -15,11 +15,17 @@ export function useWebSocket(sessionId: number | null) {
     setThinking,
     addSearchActivity,
     clearSearchActivities,
+    clearGraphData,
     updateSessionTitle,
   } = useSession();
 
   const connect = useCallback(() => {
-    if (!sessionId || wsRef.current) return;
+    if (!sessionId) return;
+    // Close stale connection if not open
+    if (wsRef.current && wsRef.current.readyState !== WebSocket.OPEN) {
+      wsRef.current = null;
+    }
+    if (wsRef.current) return;
 
     const token = localStorage.getItem("access_token");
     const wsUrl = `ws://localhost:8000/ws/sessions/${sessionId}/?token=${token || ""}`;
@@ -43,13 +49,15 @@ export function useWebSocket(sessionId: number | null) {
       setError("WebSocket接続エラー");
       wsRef.current = null;
     };
-  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, updateSessionTitle]);
+  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, clearGraphData, updateSessionTitle]);
 
   const handleEvent = useCallback(
     (data: Record<string, unknown>) => {
       switch (data.type) {
         case "session_started":
           setStatus("running");
+          clearGraphData();
+          clearSearchActivities();
           break;
 
         case "node_started":
@@ -236,7 +244,7 @@ export function useWebSocket(sessionId: number | null) {
           break;
       }
     },
-    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, updateSessionTitle],
+    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, clearGraphData, updateSessionTitle],
   );
 
   const sendMessage = useCallback(
@@ -265,7 +273,12 @@ export function useWebSocket(sessionId: number | null) {
     return () => disconnect();
   }, [disconnect]);
 
-  return { connect, sendMessage, stopInference, disconnect };
+  const isConnected = useCallback(
+    () => wsRef.current?.readyState === WebSocket.OPEN,
+    [],
+  );
+
+  return { connect, sendMessage, stopInference, disconnect, isConnected };
 }
 
 // Types

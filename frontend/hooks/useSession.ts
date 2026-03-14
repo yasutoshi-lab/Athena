@@ -108,6 +108,7 @@ interface SessionState {
   setThinking: (t: ThinkingState | null) => void;
   addSearchActivity: (item: SearchActivityItem) => void;
   clearSearchActivities: () => void;
+  clearGraphData: () => void;
   setSessionList: (list: SessionListItem[]) => void;
   updateSessionTitle: (id: number, title: string) => void;
   reset: () => void;
@@ -162,6 +163,7 @@ export const useSession = create<SessionState>((set) => ({
   addSearchActivity: (item) =>
     set((s) => ({ searchActivities: [...s.searchActivities, item] })),
   clearSearchActivities: () => set({ searchActivities: [] }),
+  clearGraphData: () => set({ graphNodes: [], graphEdges: [] }),
   setSessionList: (list) => set({ sessionList: list }),
   updateSessionTitle: (id, title) =>
     set((s) => ({

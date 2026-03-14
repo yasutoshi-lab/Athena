@@ -21,7 +21,7 @@ export default function MainPage() {
     setStatus,
     reset,
   } = useSession();
-  const { connect, sendMessage, stopInference, disconnect } = useWebSocket(sessionId);
+  const { connect, sendMessage, stopInference, disconnect, isConnected } = useWebSocket(sessionId);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -49,8 +49,20 @@ export default function MainPage() {
       variant: "bubble",
     });
 
+    // Follow-up query within existing session
+    if (sessionId) {
+      if (isConnected()) {
+        sendMessage(query);
+      } else {
+        // WS closed — reconnect and send
+        connect();
+        setTimeout(() => sendMessage(query), 500);
+      }
+      return;
+    }
+
+    // New session (no existing sessionId)
     try {
-      // Create session via REST API
       const session = await api.createSession(query);
       reset();
       // Re-add user message after reset
