@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef } from "react";
 import { useSession } from "./useSession";
+import { useToast } from "./useToast";
 
 export function useWebSocket(sessionId: number | null) {
   const wsRef = useRef<WebSocket | null>(null);
@@ -18,6 +19,7 @@ export function useWebSocket(sessionId: number | null) {
     clearGraphData,
     updateSessionTitle,
   } = useSession();
+  const addToast = useToast((s) => s.addToast);
 
   const connect = useCallback(() => {
     if (!sessionId) return;
@@ -49,7 +51,7 @@ export function useWebSocket(sessionId: number | null) {
       setError("WebSocket接続エラー");
       wsRef.current = null;
     };
-  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, clearGraphData, updateSessionTitle]);
+  }, [sessionId, addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, clearGraphData, updateSessionTitle, addToast]);
 
   const handleEvent = useCallback(
     (data: Record<string, unknown>) => {
@@ -259,16 +261,11 @@ export function useWebSocket(sessionId: number | null) {
           setThinking(null);
           setError(data.message as string);
           setStatus("error");
-          addMessage({
-            id: `error-${Date.now()}`,
-            type: "ai",
-            content: data.message as string,
-            variant: "bubble",
-          });
+          addToast({ type: "error", message: data.message as string });
           break;
       }
     },
-    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, clearGraphData, updateSessionTitle],
+    [addMessage, updateMessage, addGraphData, setProgress, setStatus, setSelectedModel, setError, setThinking, addSearchActivity, clearSearchActivities, clearGraphData, updateSessionTitle, addToast],
   );
 
   const sendMessage = useCallback(

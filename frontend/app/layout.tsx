@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ToastContainer from "@/components/ToastContainer";
 
 export const metadata: Metadata = {
   title: "Athena — 因果推論システム",
@@ -20,7 +21,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <ToastContainer />
+        {children}
+      </body>
     </html>
   );
 }
