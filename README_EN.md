@@ -1,5 +1,7 @@
 <img src="./banner.svg" width="800" />
 
+[README_JP](README.md)
+
 # Athena — Causal Inference AI System
 
 A system that automatically generates and validates multiple hypotheses for causal questions like "Why did X happen?", visualizing the reasoning process in real-time as a **knowledge graph**.
