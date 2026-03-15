@@ -6,6 +6,27 @@
 
 ※より正確な表現については[システムの位置づけと実現可能性](./doc/jp/detail.md)を参照
 
+## セットアップ
+
+### 前提条件
+
+- Python 3.12+
+- [Node.js 22+](https://nodejs.org/ja)
+- [Docker](https://docs.docker.com/engine/install)
+
+### 環境変数の設定&コンテナ起動
+
+```bash
+# .envの作成及び、APIキーの設定
+cp .env.example .env
+
+# Docker Composeで同時起動
+docker compose up -d
+
+# ブラウザでシステムにアクセス
+http://localhost:3000
+```
+
 ## 主な機能
 
 - ユーザーの問いからクエリ複雑度を判定し、使用モデル（Sonnet / Opus）を自動選択
@@ -29,6 +50,32 @@
 | Web検索 | Brave Search API | リアルタイム証拠収集 |
 | ベクトルDB | PostgreSQL + pgvector | 埋め込みによる類似検索・重複排除 |
 | 監視 | LangSmith | エージェント動作のトレース・評価 |
+
+## ディレクトリ構成
+
+```
+athena/
+├── backend/                    # Django バックエンド
+│   ├── config/                 #   Django設定（settings, urls, asgi）
+│   ├── causal/                 #   因果推論アプリ（モデル・API・WebSocket・パイプライン）
+│   ├── users/                  #   認証・ユーザー設定アプリ
+│   └── tests/                  #   バックエンドテスト
+├── frontend/                   # Next.js フロントエンド
+│   ├── app/                    #   ページ（ログイン・メイン・設定・新規登録）
+│   ├── components/             #   UIコンポーネント（TopBar・ChatPanel・GraphPanel等）
+│   ├── hooks/                  #   Zustandストア（認証・セッション・WebSocket・多言語）
+│   └── lib/                    #   API通信・i18n翻訳
+├── doc/                        # ドキュメント
+│   ├── jp/                     #   日本語版（frontend・backend・db・docker）
+│   └── en/                     #   英語版
+├── moc/                        # 設計書・UIモックアップ
+├── docker-compose.yml          # PostgreSQL + Redis コンテナ定義
+├── pyproject.toml              # Python プロジェクト設定・依存パッケージ
+├── init.sql                    # DB 初期化スクリプト（pgvector 拡張）
+├── icon.svg                    # プロジェクトアイコン
+├── banner.svg                  # README バナー画像
+└── .env                        # 環境変数（APIキー・DB接続情報）
+```
 
 ## LangGraph パイプライン（7ノード構成）
 
@@ -59,93 +106,6 @@ START
   ▼
 END  ← token_usage を DB に記録
 ```
-
-## ディレクトリ構成
-
-```
-athena/
-├── backend/                    # Django バックエンド
-│   ├── config/                 #   Django設定（settings, urls, asgi）
-│   ├── causal/                 #   因果推論アプリ（モデル・API・WebSocket・パイプライン）
-│   ├── users/                  #   認証・ユーザー設定アプリ
-│   └── tests/                  #   バックエンドテスト
-├── frontend/                   # Next.js フロントエンド
-│   ├── app/                    #   ページ（ログイン・メイン・設定・新規登録）
-│   ├── components/             #   UIコンポーネント（TopBar・ChatPanel・GraphPanel等）
-│   ├── hooks/                  #   Zustandストア（認証・セッション・WebSocket・多言語）
-│   └── lib/                    #   API通信・i18n翻訳
-├── doc/                        # ドキュメント
-│   ├── jp/                     #   日本語版（frontend・backend・db・docker）
-│   └── en/                     #   英語版
-├── moc/                        # 設計書・UIモックアップ
-├── docker-compose.yml          # PostgreSQL + Redis コンテナ定義
-├── pyproject.toml              # Python プロジェクト設定・依存パッケージ
-├── init.sql                    # DB 初期化スクリプト（pgvector 拡張）
-├── icon.svg                    # プロジェクトアイコン
-├── banner.svg                  # README バナー画像
-└── .env                        # 環境変数（APIキー・DB接続情報）
-```
-
-## セットアップ
-
-### 前提条件
-
-- Python 3.12+
-- Node.js 22+
-- Docker / Docker Compose
-
-### 1. 環境変数の設定
-
-```bash
-cp .env.example .env
-# .env に各APIキーを設定
-```
-
-### 2. Docker コンテナの起動
-
-```bash
-docker compose up -d
-```
-
-PostgreSQL（pgvector拡張付き）と Redis が起動します。
-
-### 3. バックエンドのセットアップ
-
-```bash
-# 仮想環境の有効化
-source .venv/bin/activate
-
-# 依存パッケージのインストール
-python -m pip install -e .
-
-# マイグレーションの実行
-cd backend
-python manage.py migrate
-
-# 管理ユーザーの作成
-python manage.py createsuperuser
-
-# 開発サーバーの起動（Daphne / ASGI）
-python manage.py runserver 8000
-```
-
-### 4. フロントエンドのセットアップ
-
-```bash
-cd frontend
-
-# 依存パッケージのインストール
-npm install
-
-# 開発サーバーの起動
-npm run dev
-```
-
-### 5. アクセス
-
-- フロントエンド: http://localhost:3000
-- バックエンドAPI: http://localhost:8000/api/
-- Django Admin: http://localhost:8000/admin/
 
 ## ドキュメント一覧
 
