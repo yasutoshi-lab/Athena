@@ -6,9 +6,22 @@ from .models import UserSettings
 
 
 class UserSettingsSerializer(serializers.ModelSerializer):
+    anthropic_api_key_set = serializers.SerializerMethodField()
+    brave_api_key_set = serializers.SerializerMethodField()
+
     class Meta:
         model = UserSettings
         exclude = ("id", "user")
+        extra_kwargs = {
+            "anthropic_api_key": {"write_only": True},
+            "brave_api_key": {"write_only": True},
+        }
+
+    def get_anthropic_api_key_set(self, obj) -> bool:
+        return bool(obj.anthropic_api_key)
+
+    def get_brave_api_key_set(self, obj) -> bool:
+        return bool(obj.brave_api_key)
 
 
 class UserSerializer(serializers.ModelSerializer):

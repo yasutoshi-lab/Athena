@@ -17,6 +17,8 @@ interface User {
     graph_animation: boolean;
     graph_grid: boolean;
     animation_speed: string;
+    anthropic_api_key_set: boolean;
+    brave_api_key_set: boolean;
   };
 }
 

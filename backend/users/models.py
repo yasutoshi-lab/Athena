@@ -34,6 +34,8 @@ class UserSettings(models.Model):
         choices=[("slow", "低速"), ("normal", "標準"), ("fast", "高速")],
         default="normal",
     )
+    anthropic_api_key = models.CharField(max_length=255, blank=True)
+    brave_api_key = models.CharField(max_length=255, blank=True)
 
     class Meta:
         verbose_name = "ユーザー設定"

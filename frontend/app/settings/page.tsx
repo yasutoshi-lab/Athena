@@ -340,6 +340,38 @@ function GeneralTab({
         </div>
       </SettingsCard>
 
+      <SectionTitle>{t("settings.apiKeys")}</SectionTitle>
+      <SettingsCard>
+        <SettingsRow label={t("settings.anthropicApiKey")} desc={t("settings.anthropicApiKeyDesc")}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+            <input
+              type="password"
+              style={{ ...inputStyle, fontFamily: "var(--mono)", fontSize: 12 }}
+              value={(settings.anthropic_api_key as string) || ""}
+              onChange={(e) => update("anthropic_api_key", e.target.value)}
+              placeholder={t("settings.apiKeyPlaceholder")}
+            />
+            <span style={{ fontSize: 11, color: settings.anthropic_api_key_set ? "#2dbe8a" : "var(--text-2)" }}>
+              {settings.anthropic_api_key_set ? t("settings.apiKeySet") : t("settings.apiKeyNotSet")}
+            </span>
+          </div>
+        </SettingsRow>
+        <SettingsRow label={t("settings.braveApiKey")} desc={t("settings.braveApiKeyDesc")}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+            <input
+              type="password"
+              style={{ ...inputStyle, fontFamily: "var(--mono)", fontSize: 12 }}
+              value={(settings.brave_api_key as string) || ""}
+              onChange={(e) => update("brave_api_key", e.target.value)}
+              placeholder="BSA..."
+            />
+            <span style={{ fontSize: 11, color: settings.brave_api_key_set ? "#2dbe8a" : "var(--text-2)" }}>
+              {settings.brave_api_key_set ? t("settings.apiKeySet") : t("settings.apiKeyNotSet")}
+            </span>
+          </div>
+        </SettingsRow>
+      </SettingsCard>
+
       <button
         onClick={onSave}
         disabled={saving}
