@@ -6,7 +6,7 @@
 
 - ユーザーの問いからクエリ複雑度を判定し、使用モデル（Sonnet / Opus）を自動選択
 - 3〜5個の因果仮説を自動生成
-- Brave Search API によるWeb検索 + PDF解析で証拠・反証を収集
+- Brave Search API によるWeb検索で証拠・反証を収集
 - 証拠をベクトル化し PostgreSQL（pgvector）に保存・重複排除
 - 因果グラフを構築し、フロントエンドに WebSocket でリアルタイム配信
 - 最も蓋然性の高い仮説を根拠付きで提示
@@ -24,7 +24,6 @@
 | AIパイプライン | LangGraph | 7ノード推論パイプライン制御 |
 | LLM | Claude Sonnet / Opus（自動切替） | 仮説生成・証拠評価・推論 |
 | Web検索 | Brave Search API | リアルタイム証拠収集 |
-| PDF解析 | PyMuPDF | 論文PDFのテキスト抽出 |
 | ベクトルDB | PostgreSQL + pgvector | 埋め込みによる類似検索・重複排除 |
 | 監視 | LangSmith | エージェント動作のトレース・評価 |
 
@@ -43,7 +42,7 @@ START
 [ hypothesis_generator ]  ← Claude で3〜5個の因果仮説を生成
   │
   ▼
-[ evidence_searcher ]     ← Brave API + PDF URLから証拠・反証を収集
+[ evidence_searcher ]     ← Brave API から証拠・反証を収集
   │
   ▼
 [ graph_builder ]         ← ノード・エッジを生成・pgvectorに保存

@@ -1,4 +1,4 @@
-"""Node 4: Evidence searcher - collects evidence via Brave Search + PDF."""
+"""Node 4: Evidence searcher - collects evidence via Brave Search."""
 import logging
 
 import httpx
