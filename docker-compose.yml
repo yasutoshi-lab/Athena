@@ -28,44 +28,44 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
-    build:
-      context: ./backend
-    container_name: athena-backend
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: causal-inference
-      POSTGRES_USER: ciuser
-      POSTGRES_PASSWORD: cipass
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      DJANGO_DEBUG: "True"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: >
-      sh -c "python manage.py migrate --noinput &&
-             daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+  # backend:
+  #   build:
+  #     context: ./backend
+  #   container_name: athena-backend
+  #   ports:
+  #     - "8000:8000"
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     POSTGRES_HOST: postgres
+  #     POSTGRES_PORT: 5432
+  #     POSTGRES_DB: causal-inference
+  #     POSTGRES_USER: ciuser
+  #     POSTGRES_PASSWORD: cipass
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     DJANGO_DEBUG: "True"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   command: >
+  #     sh -c "python manage.py migrate --noinput &&
+  #            daphne -b 0.0.0.0 -p 8000 config.asgi:application"
 
-  frontend:
-    build:
-      context: ./frontend
-    container_name: athena-frontend
-    ports:
-      - "3000:3000"
-    environment:
-      HOSTNAME: "0.0.0.0"
-      PORT: "3000"
-      BACKEND_URL: http://backend:8000
-    depends_on:
-      - backend
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #   container_name: athena-frontend
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     HOSTNAME: "0.0.0.0"
+  #     PORT: "3000"
+  #     BACKEND_URL: http://backend:8000
+  #   depends_on:
+  #     - backend
 
 volumes:
   postgres_data:
