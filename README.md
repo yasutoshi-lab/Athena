@@ -25,6 +25,7 @@
 cp .env.example .env
 
 # Docker Composeで同時起動
+# ※wsl利用の場合、DockerDesktopを起動した状態で実行してください
 docker compose up -d
 
 # ブラウザでシステムにアクセス
