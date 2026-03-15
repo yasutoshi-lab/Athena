@@ -169,3 +169,21 @@ npm run dev
 - [LangGraph](https://langchain-ai.github.io/langgraph/)
 - [LangSmith](https://docs.smith.langchain.com/)
 - [Brave Search API](https://api-dashboard.search.brave.com/app/documentation/web-search/get-started)
+
+## コントリビューション
+
+コントリビューションを歓迎します。以下の手順でお願いします：
+
+1. このリポジトリを Fork します
+2. フィーチャーブランチを作成します（`git checkout -b feature/your-feature`）
+3. 変更をコミットします（`git commit -m '機能の説明'`）
+4. ブランチを Push します（`git push origin feature/your-feature`）
+5. Pull Request を作成します
+
+バグ報告や機能リクエストは [Issues](https://github.com/yasutoshi-lab/Athena/issues) からお願いします。
+
+## ライセンス
+
+このプロジェクトは [Apache License 2.0](./LICENSE) のもとで公開されています。
+
+Copyright 2026 yasutoshi-lab
