@@ -32,6 +32,12 @@ This screen allows you to manage your user profile, LLM model settings, API usag
 │            │  │ Threshold                                 │      │
 │            │  └───────────────────────────────────────────┘      │
 │            │                                                     │
+│            │  API Keys                                           │
+│            │  ┌───────────────────────────────────────────┐      │
+│            │  │ Anthropic API Key  [••••••••]  Configured  │      │
+│            │  │ Brave Search Key   [••••••••]  Not set     │      │
+│            │  └───────────────────────────────────────────┘      │
+│            │                                                     │
 │            │  [Save Changes]                                     │
 │            │                                                     │
 │  → Logout  │                                                     │
@@ -50,6 +56,15 @@ This screen allows you to manage your user profile, LLM model settings, API usag
 | Default Model | Auto-detect / Claude Sonnet / Claude Opus |
 | Complexity Threshold | Entity count at which the system switches to Opus (default: 3) |
 | System Prompt | Custom prompt shared across all sessions |
+| Anthropic API Key | Authentication key for Claude API (system default used if not set) |
+| Brave Search API Key | API key for web search (system default used if not set) |
+
+#### About API Keys
+
+- API keys are masked with `type="password"` in the input field
+- After saving, GET responses do not include the key values (security measure)
+- Instead, a "Configured" / "Not set (using default)" status is displayed
+- Clearing a key and saving falls back to the system default key (configured in `.env`)
 
 ### API Usage
 
