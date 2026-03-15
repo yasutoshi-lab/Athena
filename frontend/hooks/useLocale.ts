@@ -8,8 +8,13 @@ interface LocaleState {
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }
 
-export const useLocale = create<LocaleState>((set, get) => ({
+function makeT(locale: Locale) {
+  return (key: TranslationKey, params?: Record<string, string | number>) =>
+    translate(locale, key, params);
+}
+
+export const useLocale = create<LocaleState>((set) => ({
   locale: "ja",
-  setLocale: (locale) => set({ locale }),
-  t: (key, params) => translate(get().locale, key, params),
+  t: makeT("ja"),
+  setLocale: (locale) => set({ locale, t: makeT(locale) }),
 }));
