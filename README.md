@@ -1,6 +1,5 @@
 <img src="./banner.svg" width="800" />
 
-
 # Athena — 因果推論AIシステム
 
 「なぜ◯◯が起きたのか」という因果的な問いに対し、AIが複数の仮説を自動生成・検証し、その思考プロセスをリアルタイムで**知識グラフ**として可視化するシステムです。
@@ -72,50 +71,16 @@ END  ← token_usage を DB に記録
 
 ```
 athena/
-├── backend/
-│   ├── config/                   # Django設定（settings, urls, asgi）
-│   ├── causal/                   # 因果推論アプリ
-│   │   ├── agents/               # LangGraph 7ノード
-│   │   │   ├── complexity_judge.py
-│   │   │   ├── question_parser.py
-│   │   │   ├── hypothesis_generator.py
-│   │   │   ├── evidence_searcher.py
-│   │   │   ├── graph_builder.py
-│   │   │   ├── hypothesis_ranker.py
-│   │   │   └── answer_synthesizer.py
-│   │   ├── graph/pipeline.py     # LangGraph パイプライン定義
-│   │   ├── consumers.py          # WebSocket Consumer
-│   │   ├── middleware.py          # Token Usage Tracker
-│   │   ├── models.py
-│   │   ├── serializers.py
-│   │   ├── views.py
-│   │   └── urls.py
-│   ├── users/                    # 認証・設定アプリ
-│   │   ├── models.py             # UserSettings
-│   │   ├── views.py              # Auth / Settings API
-│   │   ├── serializers.py
-│   │   └── urls.py
-│   └── manage.py
-├── frontend/
-│   ├── app/
-│   │   ├── page.tsx              # メイン2ペイン
-│   │   ├── login/page.tsx        # ログイン画面
-│   │   └── settings/page.tsx     # 設定画面（3タブ）
-│   ├── components/
-│   │   ├── TopBar.tsx
-│   │   ├── ChatPanel.tsx
-│   │   └── GraphPanel.tsx        # D3.js 知識グラフ
-│   ├── hooks/
-│   │   ├── useAuth.ts            # JWT認証管理
-│   │   ├── useSession.ts         # セッション状態管理
-│   │   └── useWebSocket.ts       # WebSocket通信
-│   └── lib/api.ts                # API通信 + JWT自動リフレッシュ
-├── moc/                          # 設計書・UIモックアップ
-├── docker-compose.yml
-├── pyproject.toml
-├── init.sql
-├── .env.example
-└── .env
+├── backend/                # Django バックエンド（REST API・WebSocket・認証・推論パイプライン）
+├── frontend/               # Next.js フロントエンド（UI・状態管理・グラフ描画）
+├── doc/                    # ドキュメント（日本語版 jp/・英語版 en/）
+├── moc/                    # 設計書・UIモックアップ
+├── docker-compose.yml      # PostgreSQL + Redis コンテナ定義
+├── pyproject.toml          # Python プロジェクト設定・依存パッケージ
+├── init.sql                # DB 初期化スクリプト（pgvector 拡張）
+├── icon.svg                # プロジェクトアイコン
+├── banner.svg              # README バナー画像
+└── .env                    # 環境変数（APIキー・DB接続情報）
 ```
 
 ## セットアップ
