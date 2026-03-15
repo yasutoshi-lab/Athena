@@ -4,12 +4,13 @@
 
 「なぜ◯◯が起きたのか」という因果的な問いに対し、AIが複数の仮説を自動生成・検証し、その思考プロセスをリアルタイムで**知識グラフ**として可視化するシステムです。
 
+※より正確な表現については[システムの位置づけと実現可能性](./doc/jp/detail.md)を参照
+
 ## 主な機能
 
 - ユーザーの問いからクエリ複雑度を判定し、使用モデル（Sonnet / Opus）を自動選択
 - 3〜5個の因果仮説を自動生成
 - Brave Search API によるWeb検索で証拠・反証を収集
-- 証拠をベクトル化し PostgreSQL（pgvector）に保存・重複排除
 - 因果グラフを構築し、フロントエンドに WebSocket でリアルタイム配信
 - 最も蓋然性の高い仮説を根拠付きで提示
 - トークン使用量・コスト（USD）の追跡と可視化
@@ -58,14 +59,6 @@ START
   ▼
 END  ← token_usage を DB に記録
 ```
-
-## 画面構成
-
-| 画面 | 説明 |
-|---|---|
-| ログイン画面 | メール/パスワード認証。JWT取得後にメイン画面へ遷移 |
-| メイン画面 | 左：チャットパネル / 右：D3.js 知識グラフの2ペイン |
-| 設定画面 | 一般（プロフィール・モデル選択）/ API使用量 / 外観 の3タブ |
 
 ## ディレクトリ構成
 
@@ -154,46 +147,6 @@ npm run dev
 - バックエンドAPI: http://localhost:8000/api/
 - Django Admin: http://localhost:8000/admin/
 
-## API エンドポイント
-
-### 認証
-
-| エンドポイント | メソッド | 説明 |
-|---|---|---|
-| `/api/auth/login/` | POST | ユーザー名+パスワード → JWT発行 |
-| `/api/auth/refresh/` | POST | リフレッシュトークンでアクセストークンを更新 |
-| `/api/auth/logout/` | POST | リフレッシュトークンを無効化 |
-| `/api/auth/me/` | GET | ログイン中ユーザーのプロフィール取得 |
-
-### 推論セッション
-
-| エンドポイント | メソッド | 説明 |
-|---|---|---|
-| `/api/sessions/` | GET / POST | セッション一覧取得 / 新規作成 |
-| `/api/sessions/{id}/` | GET | セッション詳細（仮説・証拠含む） |
-| `/api/sessions/{id}/graph/` | GET | グラフノード・エッジ一覧 |
-| `/ws/sessions/{id}/` | WebSocket | 推論進捗のリアルタイムストリーミング |
-
-### 設定・使用量
-
-| エンドポイント | メソッド | 説明 |
-|---|---|---|
-| `/api/settings/` | GET / PUT | ユーザー設定の取得・更新 |
-| `/api/usage/` | GET | トークン使用量・コスト集計 |
-
-## データベース
-
-| テーブル | 説明 |
-|---|---|
-| `auth_user` | ユーザーアカウント（Django標準） |
-| `users_usersettings` | ユーザー設定（モデル選択・プロンプト・外観） |
-| `causal_session` | 推論セッション |
-| `causal_hypothesis` | 生成された仮説 |
-| `causal_evidence` | 証拠・反証（pgvector埋め込み付き） |
-| `causal_graphnode` | グラフノード（question/hypothesis/support/counter/concept） |
-| `causal_graphedge` | グラフエッジ（causal/support/counter/rel） |
-| `causal_tokenusage` | トークン使用量・コスト記録 |
-
 ## ドキュメント一覧
 
 | 項目 | 機能 | 日本語版 | English |
@@ -216,5 +169,3 @@ npm run dev
 - [LangGraph](https://langchain-ai.github.io/langgraph/)
 - [LangSmith](https://docs.smith.langchain.com/)
 - [Brave Search API](https://api-dashboard.search.brave.com/app/documentation/web-search/get-started)
-- [D3.js](https://d3js.org/)
-- [Django Channels](https://channels.readthedocs.io/)
