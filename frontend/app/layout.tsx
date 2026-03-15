@@ -5,6 +5,7 @@ import ToastContainer from "@/components/ToastContainer";
 export const metadata: Metadata = {
   title: "Athena — 因果推論システム",
   description: "AIが多角的に推論し、知識グラフとして可視化するシステム",
+  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({
