@@ -54,23 +54,7 @@ export default function TopBar({ onSidebarToggle, isSidebarOpen }: TopBarProps) 
           userSelect: "none",
         }}
       >
-        <div
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 5,
-            background: "var(--accent-dim2)",
-            border: "1px solid var(--border-focus)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 11,
-            color: "var(--accent)",
-            fontWeight: 700,
-          }}
-        >
-          A
-        </div>
+        <img src="/icon.svg" alt="Athena" width={22} height={22} style={{ borderRadius: 5 }} />
         Athena
       </div>
 

@@ -56,23 +56,7 @@ export default function LoginPage() {
         {/* Logo + Language */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "var(--accent-dim2)",
-                border: "1px solid var(--border-focus)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 16,
-                fontWeight: 700,
-                color: "var(--accent)",
-              }}
-            >
-              A
-            </div>
+            <img src="/icon.svg" alt="Athena" width={32} height={32} style={{ borderRadius: 8 }} />
             <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.03em" }}>
               Athena
             </span>
