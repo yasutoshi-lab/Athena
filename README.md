@@ -224,6 +224,7 @@ npm run dev
 | Frontend | ログイン画面 | [ログイン画面](doc/jp/frontend/01_login.md) | [Login Screen](doc/en/frontend/01_login.md) |
 | Frontend | メイン画面 | [メイン画面](doc/jp/frontend/02_main.md) | [Main Screen](doc/en/frontend/02_main.md) |
 | Frontend | 設定画面 | [設定画面](doc/jp/frontend/03_settings.md) | [Settings Screen](doc/en/frontend/03_settings.md) |
+| Frontend | アカウント作成画面 | [アカウント作成画面](doc/jp/frontend/04_signup.md) | [Account Registration](doc/en/frontend/04_signup.md) |
 | Backend | 認証 API | [認証 API](doc/jp/backend/01_auth.md) | [Authentication API](doc/en/backend/01_auth.md) |
 | Backend | セッション API | [セッション API](doc/jp/backend/02_sessions.md) | [Sessions API](doc/en/backend/02_sessions.md) |
 | Backend | WebSocket API | [WebSocket API](doc/jp/backend/03_websocket.md) | [WebSocket API](doc/en/backend/03_websocket.md) |
