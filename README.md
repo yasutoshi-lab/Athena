@@ -5,6 +5,7 @@
 # Athena — 因果推論AIシステム
 
 「なぜ◯◯が起きたのか」という因果的な問いに対し、AIが複数の仮説を自動生成・検証し、その思考プロセスをリアルタイムで**知識グラフ**として可視化するシステムです。
+また、このシステムでは [Brave API](https://brave.com/search/api/)と[Claude API](https://platform.claude.com/)を必要とします
 
 ※より正確な表現については[システムの位置づけと実現可能性](./doc/jp/detail.md)を参照
 

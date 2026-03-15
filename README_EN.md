@@ -5,6 +5,7 @@
 # Athena — Causal Inference AI System
 
 A system that automatically generates and validates multiple hypotheses for causal questions like "Why did X happen?", visualizing the reasoning process in real-time as a **knowledge graph**.
+Additionally, this system requires the [Brave API](https://brave.com/search/api/) and the [Claude API](https://platform.claude.com/).
 
 *For a more precise description of the system's scope and feasibility, see [System Positioning and Feasibility](./doc/en/detail.md).
 
