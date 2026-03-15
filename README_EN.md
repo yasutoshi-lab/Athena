@@ -25,6 +25,7 @@ A system that automatically generates and validates multiple hypotheses for caus
 cp .env.example .env
 
 # Start all containers with Docker Compose
+# ※If using WSL, please run this with Docker Desktop running.
 docker compose up -d
 
 # Access the system in your browser
@@ -42,18 +43,18 @@ http://localhost:3000
 
 ## Tech Stack
 
-| Layer | Technology | Role |
-|---|---|---|
-| Frontend | Next.js 15 + TypeScript | Full UI & settings page |
-| Graph Rendering | D3.js (force-directed) | Interactive knowledge graph display |
-| State Management | Zustand | Auth, session & graph state |
-| Backend | Django + Django Channels | REST API, WebSocket & auth |
-| Authentication | Django Auth + SimpleJWT | JWT auth & multi-user management |
-| AI Pipeline | LangGraph | 7-node inference pipeline orchestration |
-| LLM | Claude Sonnet / Opus (auto-switch) | Hypothesis generation, evidence evaluation & reasoning |
-| Web Search | Brave Search API | Real-time evidence collection |
-| Vector DB | PostgreSQL + pgvector | Embedding-based similarity search & deduplication |
-| Monitoring | LangSmith | Agent tracing & evaluation |
+| Layer            | Technology                         | Role                                                   |
+| ---------------- | ---------------------------------- | ------------------------------------------------------ |
+| Frontend         | Next.js 15 + TypeScript            | Full UI & settings page                                |
+| Graph Rendering  | D3.js (force-directed)             | Interactive knowledge graph display                    |
+| State Management | Zustand                            | Auth, session & graph state                            |
+| Backend          | Django + Django Channels           | REST API, WebSocket & auth                             |
+| Authentication   | Django Auth + SimpleJWT            | JWT auth & multi-user management                       |
+| AI Pipeline      | LangGraph                          | 7-node inference pipeline orchestration                |
+| LLM              | Claude Sonnet / Opus (auto-switch) | Hypothesis generation, evidence evaluation & reasoning |
+| Web Search       | Brave Search API                   | Real-time evidence collection                          |
+| Vector DB        | PostgreSQL + pgvector              | Embedding-based similarity search & deduplication      |
+| Monitoring       | LangSmith                          | Agent tracing & evaluation                             |
 
 ## Directory Structure
 
@@ -113,19 +114,19 @@ END  ← Records token_usage to DB
 
 ## Documentation
 
-| Category | Feature | 日本語版 | English |
-|----------|---------|----------|---------|
-| Frontend | Login Screen | [ログイン画面](doc/jp/frontend/01_login.md) | [Login Screen](doc/en/frontend/01_login.md) |
-| Frontend | Main Screen | [メイン画面](doc/jp/frontend/02_main.md) | [Main Screen](doc/en/frontend/02_main.md) |
-| Frontend | Settings Screen | [設定画面](doc/jp/frontend/03_settings.md) | [Settings Screen](doc/en/frontend/03_settings.md) |
-| Frontend | Account Registration | [アカウント作成画面](doc/jp/frontend/04_signup.md) | [Account Registration](doc/en/frontend/04_signup.md) |
-| Backend | Authentication API | [認証 API](doc/jp/backend/01_auth.md) | [Authentication API](doc/en/backend/01_auth.md) |
-| Backend | Sessions API | [セッション API](doc/jp/backend/02_sessions.md) | [Sessions API](doc/en/backend/02_sessions.md) |
-| Backend | WebSocket API | [WebSocket API](doc/jp/backend/03_websocket.md) | [WebSocket API](doc/en/backend/03_websocket.md) |
-| Backend | Settings & Usage API | [設定・使用量 API](doc/jp/backend/04_settings_usage.md) | [Settings & Usage API](doc/en/backend/04_settings_usage.md) |
-| Database | PostgreSQL | [PostgreSQL](doc/jp/db/postgresql.md) | [PostgreSQL](doc/en/db/postgresql.md) |
-| Database | Redis | [Redis](doc/jp/db/redis.md) | [Redis](doc/en/db/redis.md) |
-| Docker | Operations Guide | [Docker 運用ガイド](doc/jp/docker/docker.md) | [Docker Operations Guide](doc/en/docker/docker.md) |
+| Category | Feature              | 日本語版                                             | English                                                      |
+| -------- | -------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
+| Frontend | Login Screen         | [ログイン画面](doc/jp/frontend/01_login.md)             | [Login Screen](doc/en/frontend/01_login.md)                     |
+| Frontend | Main Screen          | [メイン画面](doc/jp/frontend/02_main.md)                | [Main Screen](doc/en/frontend/02_main.md)                       |
+| Frontend | Settings Screen      | [設定画面](doc/jp/frontend/03_settings.md)              | [Settings Screen](doc/en/frontend/03_settings.md)               |
+| Frontend | Account Registration | [アカウント作成画面](doc/jp/frontend/04_signup.md)      | [Account Registration](doc/en/frontend/04_signup.md)            |
+| Backend  | Authentication API   | [認証 API](doc/jp/backend/01_auth.md)                   | [Authentication API](doc/en/backend/01_auth.md)                 |
+| Backend  | Sessions API         | [セッション API](doc/jp/backend/02_sessions.md)         | [Sessions API](doc/en/backend/02_sessions.md)                   |
+| Backend  | WebSocket API        | [WebSocket API](doc/jp/backend/03_websocket.md)         | [WebSocket API](doc/en/backend/03_websocket.md)                 |
+| Backend  | Settings & Usage API | [設定・使用量 API](doc/jp/backend/04_settings_usage.md) | [Settings &amp; Usage API](doc/en/backend/04_settings_usage.md) |
+| Database | PostgreSQL           | [PostgreSQL](doc/jp/db/postgresql.md)                   | [PostgreSQL](doc/en/db/postgresql.md)                           |
+| Database | Redis                | [Redis](doc/jp/db/redis.md)                             | [Redis](doc/en/db/redis.md)                                     |
+| Docker   | Operations Guide     | [Docker 運用ガイド](doc/jp/docker/docker.md)            | [Docker Operations Guide](doc/en/docker/docker.md)              |
 
 ## References
 
