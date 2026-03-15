@@ -71,16 +71,26 @@ END  ← token_usage を DB に記録
 
 ```
 athena/
-├── backend/                # Django バックエンド（REST API・WebSocket・認証・推論パイプライン）
-├── frontend/               # Next.js フロントエンド（UI・状態管理・グラフ描画）
-├── doc/                    # ドキュメント（日本語版 jp/・英語版 en/）
-├── moc/                    # 設計書・UIモックアップ
-├── docker-compose.yml      # PostgreSQL + Redis コンテナ定義
-├── pyproject.toml          # Python プロジェクト設定・依存パッケージ
-├── init.sql                # DB 初期化スクリプト（pgvector 拡張）
-├── icon.svg                # プロジェクトアイコン
-├── banner.svg              # README バナー画像
-└── .env                    # 環境変数（APIキー・DB接続情報）
+├── backend/                    # Django バックエンド
+│   ├── config/                 #   Django設定（settings, urls, asgi）
+│   ├── causal/                 #   因果推論アプリ（モデル・API・WebSocket・パイプライン）
+│   ├── users/                  #   認証・ユーザー設定アプリ
+│   └── tests/                  #   バックエンドテスト
+├── frontend/                   # Next.js フロントエンド
+│   ├── app/                    #   ページ（ログイン・メイン・設定・新規登録）
+│   ├── components/             #   UIコンポーネント（TopBar・ChatPanel・GraphPanel等）
+│   ├── hooks/                  #   Zustandストア（認証・セッション・WebSocket・多言語）
+│   └── lib/                    #   API通信・i18n翻訳
+├── doc/                        # ドキュメント
+│   ├── jp/                     #   日本語版（frontend・backend・db・docker）
+│   └── en/                     #   英語版
+├── moc/                        # 設計書・UIモックアップ
+├── docker-compose.yml          # PostgreSQL + Redis コンテナ定義
+├── pyproject.toml              # Python プロジェクト設定・依存パッケージ
+├── init.sql                    # DB 初期化スクリプト（pgvector 拡張）
+├── icon.svg                    # プロジェクトアイコン
+├── banner.svg                  # README バナー画像
+└── .env                        # 環境変数（APIキー・DB接続情報）
 ```
 
 ## セットアップ
