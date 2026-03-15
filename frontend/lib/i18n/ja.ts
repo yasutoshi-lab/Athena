@@ -18,6 +18,21 @@ const ja = {
   "login.submitting": "ログイン中...",
   "login.failed": "ログインに失敗しました",
   "login.footer": "ローカル環境専用システム — Athena v0.1",
+  "login.signupLink": "アカウントをお持ちでない方は",
+  "login.signupAction": "新規登録",
+
+  // Signup
+  "signup.title": "アカウント作成",
+  "signup.subtitle": "新しいアカウントを作成します",
+  "signup.username": "ユーザー名",
+  "signup.email": "メールアドレス",
+  "signup.password": "パスワード",
+  "signup.passwordConfirm": "パスワード（確認）",
+  "signup.submit": "アカウントを作成",
+  "signup.submitting": "作成中...",
+  "signup.failed": "アカウント作成に失敗しました",
+  "signup.loginLink": "すでにアカウントをお持ちの方は",
+  "signup.loginAction": "ログイン",
 
   // TopBar
   "topbar.sessions": "セッション一覧",

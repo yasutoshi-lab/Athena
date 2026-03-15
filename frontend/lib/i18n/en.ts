@@ -20,6 +20,21 @@ const en: Record<TranslationKey, string> = {
   "login.submitting": "Logging in...",
   "login.failed": "Login failed",
   "login.footer": "Local environment system — Athena v0.1",
+  "login.signupLink": "Don't have an account?",
+  "login.signupAction": "Sign Up",
+
+  // Signup
+  "signup.title": "Create Account",
+  "signup.subtitle": "Create a new account",
+  "signup.username": "Username",
+  "signup.email": "Email",
+  "signup.password": "Password",
+  "signup.passwordConfirm": "Confirm Password",
+  "signup.submit": "Create Account",
+  "signup.submitting": "Creating...",
+  "signup.failed": "Failed to create account",
+  "signup.loginLink": "Already have an account?",
+  "signup.loginAction": "Login",
 
   // TopBar
   "topbar.sessions": "Sessions",

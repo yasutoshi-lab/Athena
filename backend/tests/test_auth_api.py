@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from users.models import UserSettings
+
 from .conftest import APITestBase
 
 
@@ -124,3 +126,50 @@ class TestMeAPI(APITestBase):
         client = APIClient()
         resp = client.get("/api/auth/me/")
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class TestRegisterAPI(APITestBase):
+    """POST /api/auth/register/ — User registration."""
+
+    def _register(self, **overrides):
+        data = {
+            "username": "newuser",
+            "email": "newuser@example.com",
+            "password": "SecurePass123!",
+            "password_confirm": "SecurePass123!",
+        }
+        data.update(overrides)
+        return APIClient().post("/api/auth/register/", data, format="json")
+
+    def test_register_success(self):
+        resp = self._register()
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertIn("access", resp.data)
+        self.assertIn("refresh", resp.data)
+        self.assertEqual(resp.data["user"]["username"], "newuser")
+        self.assertTrue(User.objects.filter(username="newuser").exists())
+
+    def test_register_creates_user_settings(self):
+        self._register()
+        user = User.objects.get(username="newuser")
+        self.assertTrue(UserSettings.objects.filter(user=user).exists())
+
+    def test_register_duplicate_username(self):
+        resp = self._register(username="testuser")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_register_duplicate_email(self):
+        resp = self._register(email="test@example.com")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_register_password_mismatch(self):
+        resp = self._register(password_confirm="different")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_register_weak_password(self):
+        resp = self._register(password="123", password_confirm="123")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_register_missing_fields(self):
+        resp = APIClient().post("/api/auth/register/", {}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)

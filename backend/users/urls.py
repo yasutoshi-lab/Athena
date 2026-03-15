@@ -7,4 +7,5 @@ urlpatterns = [
     re_path(r"^refresh/?$", views.RefreshView.as_view(), name="token_refresh"),
     re_path(r"^logout/?$", views.logout_view, name="logout"),
     re_path(r"^me/?$", views.me_view, name="me"),
+    re_path(r"^register/?$", views.register_view, name="register"),
 ]

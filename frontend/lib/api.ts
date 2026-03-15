@@ -60,6 +60,22 @@ export const api = {
     return data;
   },
 
+  async register(username: string, email: string, password: string) {
+    const res = await fetch(`${API_BASE}/auth/register/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, email, password, password_confirm: password }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(JSON.stringify(data));
+    }
+    const data = await res.json();
+    localStorage.setItem("access_token", data.access);
+    localStorage.setItem("refresh_token", data.refresh);
+    return data;
+  },
+
   async logout() {
     const refresh = localStorage.getItem("refresh_token");
     try {
