@@ -6,6 +6,10 @@ A system that automatically generates and validates multiple hypotheses for caus
 
 *For a more precise description of the system's scope and feasibility, see [System Positioning and Feasibility](./doc/en/detail.md).
 
+## demo
+
+![demo](./demo.gif)
+
 ## Setup
 
 ### Prerequisites
