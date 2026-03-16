@@ -56,7 +56,6 @@ http://localhost:3000
 | AIパイプライン | LangGraph | 7ノード推論パイプライン制御 |
 | LLM | Claude Sonnet / Opus（自動切替） | 仮説生成・証拠評価・推論 |
 | Web検索 | Brave Search API | リアルタイム証拠収集 |
-| ベクトルDB | PostgreSQL + pgvector | 埋め込みによる類似検索・重複排除 |
 | 監視 | LangSmith | エージェント動作のトレース・評価 |
 
 ## ディレクトリ構成
