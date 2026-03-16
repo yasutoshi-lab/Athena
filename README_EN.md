@@ -56,7 +56,6 @@ http://localhost:3000
 | AI Pipeline      | LangGraph                          | 7-node inference pipeline orchestration                |
 | LLM              | Claude Sonnet / Opus (auto-switch) | Hypothesis generation, evidence evaluation & reasoning |
 | Web Search       | Brave Search API                   | Real-time evidence collection                          |
-| Vector DB        | PostgreSQL + pgvector              | Embedding-based similarity search & deduplication      |
 | Monitoring       | LangSmith                          | Agent tracing & evaluation                             |
 
 ## Directory Structure
