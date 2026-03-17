@@ -7,7 +7,7 @@
 「なぜ◯◯が起きたのか」という因果的な問いに対し、AIが複数の仮説を自動生成・検証し、その思考プロセスをリアルタイムで**知識グラフ**として可視化するシステムです。  
 また、このシステムでは [Brave API](https://brave.com/search/api/)と[Claude API](https://platform.claude.com/)を必要とします。
 
-※より正確な表現については[システムの位置づけと実現可能性](./doc/jp/detail.md)を参照
+※より正確な表現については[システムの位置づけと実現可能性](./doc/jp/overview/detail.md)を参照
 
 ## デモ
 
@@ -118,6 +118,8 @@ END  ← token_usage を DB に記録
 
 | 項目 | 機能 | 日本語版 | English |
 |------|------|----------|---------|
+| Overview | システムの位置づけと実現可能性 | [システムの位置づけと実現可能性](doc/jp/overview/detail.md) | [System Positioning and Feasibility](doc/en/overview/detail.md) |
+| Overview | スコアリングシステム | [スコアリングシステム](doc/jp/overview/score.md) | [Scoring System](doc/en/overview/score.md) |
 | Frontend | ログイン画面 | [ログイン画面](doc/jp/frontend/01_login.md) | [Login Screen](doc/en/frontend/01_login.md) |
 | Frontend | メイン画面 | [メイン画面](doc/jp/frontend/02_main.md) | [Main Screen](doc/en/frontend/02_main.md) |
 | Frontend | 設定画面 | [設定画面](doc/jp/frontend/03_settings.md) | [Settings Screen](doc/en/frontend/03_settings.md) |

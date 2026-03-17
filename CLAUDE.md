@@ -28,9 +28,15 @@ npm run build     # Production build
 npm run lint      # ESLint
 ```
 
+### Frontend dependency install (run from `frontend/`)
+```bash
+npm install                         # Required before first run or after package.json changes
+```
+
 ### Infrastructure
 ```bash
-docker compose up -d                # Start PostgreSQL 17 (pgvector) + Redis
+docker compose up -d postgres redis   # Start only PostgreSQL 17 (pgvector) + Redis for local dev
+docker compose up -d                  # Start full stack (postgres + redis + backend + frontend)
 ```
 
 ## Architecture
