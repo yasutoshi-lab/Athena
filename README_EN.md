@@ -7,7 +7,7 @@
 A system that automatically generates and validates multiple hypotheses for causal questions like "Why did X happen?", visualizing the reasoning process in real-time as a **knowledge graph**.  
 Additionally, this system requires the [Brave API](https://brave.com/search/api/) and the [Claude API](https://platform.claude.com/).
 
-*For a more precise description of the system's scope and feasibility, see [System Positioning and Feasibility](./doc/en/detail.md).
+*For a more precise description of the system's scope and feasibility, see [System Positioning and Feasibility](./doc/en/overview/detail.md).
 
 ## demo
 
@@ -119,6 +119,8 @@ END  ← Records token_usage to DB
 
 | Category | Feature              | 日本語版                                             | English                                                      |
 | -------- | -------------------- | ---------------------------------------------------- | ------------------------------------------------------------ |
+| Overview | System Positioning   | [システムの位置づけと実現可能性](doc/jp/overview/detail.md) | [System Positioning and Feasibility](doc/en/overview/detail.md) |
+| Overview | Scoring System       | [スコアリングシステム](doc/jp/overview/score.md)        | [Scoring System](doc/en/overview/score.md)                      |
 | Frontend | Login Screen         | [ログイン画面](doc/jp/frontend/01_login.md)             | [Login Screen](doc/en/frontend/01_login.md)                     |
 | Frontend | Main Screen          | [メイン画面](doc/jp/frontend/02_main.md)                | [Main Screen](doc/en/frontend/02_main.md)                       |
 | Frontend | Settings Screen      | [設定画面](doc/jp/frontend/03_settings.md)              | [Settings Screen](doc/en/frontend/03_settings.md)               |
